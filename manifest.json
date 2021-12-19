@@ -1,0 +1,15 @@
+{
+  "domain": "my_coap",
+  "name": "myCoap",
+  "config_flow": false,
+  "documentation": "https://www.home-assistant.io/integrations/my_coap",
+  "requirements": ["aiocoap==0.4b2"],
+  "ssdp": [],
+  "zeroconf": [],
+  "homekit": {},
+  "dependencies": [],
+  "codeowners": [
+    "@yanntalhouarne"
+  ],
+  "iot_class": "cloud_polling"
+}
