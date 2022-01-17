@@ -70,7 +70,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
         for sw in hass_switches:
             await sw.async_update_values()
     
-    async_track_time_interval(hass, async_update_switches, timedelta(seconds=1))
+    async_track_time_interval(hass, async_update_switches, timedelta(seconds=5))
 
 class coap_Switch(ToggleEntity):
     """Representation of a Digital Output."""

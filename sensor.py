@@ -81,7 +81,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
             await sensor.async_update_values()
 
     # update sensor every 5 seconds
-    async_track_time_interval(hass, async_update_sensors, timedelta(seconds=1))
+    async_track_time_interval(hass, async_update_sensors, timedelta(seconds=60))
 
 
 class CoAPsensorNode(Entity):
