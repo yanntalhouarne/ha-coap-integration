@@ -1,5 +1,9 @@
 """LEMA Off-Grid interface."""
+import sys
+sys.path.append("/srv/homeassistant/lib/python3.9/site-packages/homeassistant/components/my_coap")
+
 from datetime import timedelta
+from myCoapNode import CoApNode
 import logging
 import asyncio
 
@@ -57,19 +61,48 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
     # Setup Async CoAP
     protocol = await Context.create_client_context()
 
+    switchList = []
+    name = ""
+    addr = ""
+    index = 0
+
+    with open('node_directory.txt', 'r') as f:
+        while True:
+            line = f.readline()
+            if (not line) or (line == "#\n"):
+                break
+            elif line == "%\n":
+                line = f.readline()
+                name = line[2:-1]
+                line = f.readline()
+                addr = line[2:-1]
+                tempNode = CoApNode(name, addr)
+                switchList.append(tempNode)
+                index = index + 1
+    print("Loaded "+ str(index) + " MyCoap Switches from directory file.")
+
     # Add switches
-    hass_switches.append(coap_Switch(host, "switch", protocol, config.get(CONF_FRIENDLY_NAME), False, None))
+    for node in switchList:
+        hass_switches.append(
+            coap_Switch(
+                "["+node.ipAddr+"]", 
+                "switch", 
+                protocol, 
+                node.deviceName, 
+                False, 
+                None,
+            )
+        )
 
     # Add the entities
     async_add_entities(hass_switches)
 
     async def async_update_switches(event):
         """Update all the coap switches."""
-
         # Update sensors based on scan_period set below which comes in from the config
         for sw in hass_switches:
             await sw.async_update_values()
-    
+
     async_track_time_interval(hass, async_update_switches, timedelta(seconds=5))
 
 class coap_Switch(ToggleEntity):
@@ -78,7 +111,7 @@ class coap_Switch(ToggleEntity):
     def __init__(self, host, uri, protocol, name, unit, invert_logic):
         """Initialize the pin."""
 
-        print("Init coap switch = " + uri)
+        print("Adding switch " + name + " with address " + host)
 
         self._host = host
         self._uri = uri
@@ -142,10 +175,10 @@ class coap_Switch(ToggleEntity):
             # Check for change
             if (self._state != response_bool):
                 self._state = response_bool
-                _LOGGER.info("%s changed: %s - %s" % (self._uri, response.code, str(response_bool)))
+                #_LOGGER.info("%s changed: %s - %s" % (self._uri, response.code, str(response_bool)))
                 self.async_write_ha_state()
-            else:
-                _LOGGER.info("%s no change..." % (self._uri))
+            #else:
+                #_LOGGER.info("%s no change..." % (self._uri))
 
         except Exception as e:
             _LOGGER.info("Failed to GET resource: " + self._uri)

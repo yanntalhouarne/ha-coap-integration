@@ -1,5 +1,9 @@
 """myCoap interface."""
+import sys
+sys.path.append("/srv/homeassistant/lib/python3.9/site-packages/homeassistant/components/my_coap")
+
 from datetime import timedelta
+from myCoapNode import CoApNode
 import logging
 
 # Bring in CoAP
@@ -55,17 +59,38 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
     # Setup Async CoAP
     protocol = await Context.create_client_context()
 
+    temperatureList = []
+    name = ""
+    addr = ""
+    index = 0
+
+    with open('node_directory.txt', 'r') as f:
+        while True:
+            line = f.readline()
+            if (not line) or (line == "#\n"):
+                break
+            elif line == "%\n":
+                line = f.readline()
+                name = line[2:-1]
+                line = f.readline()
+                addr = line[2:-1]
+                tempNode = CoApNode(name, addr)
+                temperatureList.append(tempNode)
+                index = index + 1
+    print("Loaded "+ str(index) + " MyCoap Switches from directory file.")
+
     # Add sensors
-    hass_sensors.append(
-        CoAPsensorNode(
-            host,
-            "temperature",
-            protocol,
-            config.get(CONF_FRIENDLY_NAME) + " - Temperature",
-            TEMP_CELSIUS,
-            1,
+    for node in temperatureList:
+        hass_sensors.append(
+            CoAPsensorNode(
+                "["+node.ipAddr+"]",
+                "temperature",
+                protocol,
+                node.deviceName,
+                TEMP_CELSIUS,
+                1,
+            )
         )
-    )
 
     print("Adding temperature sensor done")
 
@@ -75,7 +100,6 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
 
     async def async_update_sensors(event):
         """Update temperature sensor."""
-
         # Update sensors based on scan_period set below which comes in from the config
         for sensor in hass_sensors:
             await sensor.async_update_values()
@@ -90,7 +114,7 @@ class CoAPsensorNode(Entity):
     def __init__(self, host, uri, protocol, name, unit, round_places):
         """Initialize the sensor."""
 
-        print("Init Sensor " + uri)
+        print("Adding temp sensor " + name + " with address " + host)
 
         self._uri = uri
         self._name = name
@@ -131,18 +155,18 @@ class CoAPsensorNode(Entity):
             request.set_request_uri(uri=_uri)
             response = await self._protocol.request(request).response
             #print(response.payload)
-	    # Check for change
+	        # Check for change
             if self._state != round(float(int(response.payload, 10)), self._round_places):
                 # Round result to make the ui look nice
                 self._state = round(float(int(response.payload, 10)), self._round_places)
-                _LOGGER.info(
-                    "Nucleo %s changed: %s - %r" % (self._uri, response.code, self._state)
-                )
+                #_LOGGER.info(
+                #   "Nucleo %s changed: %s - %r" % (self._uri, response.code, self._state)
+                #)
                 self.async_write_ha_state()
-            else:
-                _LOGGER.info(
-                    "%s no change... current value = %s" % (self._uri, self._state)
-                )
+            #else:
+                #_LOGGER.info(
+                #    "%s no change... current value = %s" % (self._uri, self._state)
+                #)
         except Exception as e:
             _LOGGER.info("Exception - Failed to GET resource: " + self._uri)
             _LOGGER.info(e)
