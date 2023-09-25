@@ -1,6 +1,6 @@
 """myCoap interface."""
 import sys
-sys.path.append("/srv/homeassistant/lib/python3.9/site-packages/homeassistant/components/my_coap")
+sys.path.append("/config/custom_components/ha-coap-integration")
 
 from datetime import timedelta
 from myCoapNode import CoApNode
@@ -84,7 +84,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
         hass_sensors.append(
             CoAPsensorNode(
                 "["+node.ipAddr+"]",
-                "temperature",
+                "light",
                 protocol,
                 node.deviceName,
                 TEMP_CELSIUS,

@@ -1,5 +1,5 @@
 %
- -NUCLEO-1
- -fd11:0022:0000:0000:e7f7:fd31:bce8:21fe
+ -nrf52840dk
+ -fdd3:3fec:2e0:1:3ef7:e93e:6c02:43b
 #
  

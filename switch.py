@@ -1,11 +1,13 @@
 """LEMA Off-Grid interface."""
 import sys
-sys.path.append("/srv/homeassistant/lib/python3.9/site-packages/homeassistant/components/my_coap")
+sys.path.append("/config/custom_components/ha-coap-integration")
+
 
 from datetime import timedelta
 from myCoapNode import CoApNode
 import logging
 import asyncio
+import os
 
 # Bring in CoAP
 from aiocoap import *
@@ -66,7 +68,9 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
     addr = ""
     index = 0
 
-    with open('node_directory.txt', 'r') as f:
+    _LOGGER.info("Calling async_setup_platform() ...")
+
+    with open('/config/custom_components/ha-coap-integration/node_directory.txt', 'r') as f:
         while True:
             line = f.readline()
             if (not line) or (line == "#\n"):
@@ -79,14 +83,14 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
                 tempNode = CoApNode(name, addr)
                 switchList.append(tempNode)
                 index = index + 1
-    print("Loaded "+ str(index) + " MyCoap Switches from directory file.")
+    _LOGGER.info("Loaded "+ str(index) + " MyCoap Switches from directory file.")
 
     # Add switches
     for node in switchList:
         hass_switches.append(
             coap_Switch(
                 "["+node.ipAddr+"]", 
-                "switch", 
+                "light", 
                 protocol, 
                 node.deviceName, 
                 False, 
@@ -111,7 +115,7 @@ class coap_Switch(ToggleEntity):
     def __init__(self, host, uri, protocol, name, unit, invert_logic):
         """Initialize the pin."""
 
-        print("Adding switch " + name + " with address " + host)
+        _LOGGER.info("Adding switch " + name + " with address " + host)
 
         self._host = host
         self._uri = uri
@@ -140,7 +144,7 @@ class coap_Switch(ToggleEntity):
     async def async_turn_on(self, **kwargs):
         """Turn the device on."""
         try:
-            _LOGGER.info("HA calling TURN_ON for " + self._uri)
+            _LOGGER.info("HA calling TURN_ON for " + self._host + "/" + self._uri)
             request = Message(code=PUT, payload=CONST_COAP_STRING_TRUE.encode("ascii"), uri=CONST_COAP_PROTOCOL + self._host + "/" + self._uri)
             response = await self._protocol.request(request).response
             self._state = True
@@ -152,7 +156,7 @@ class coap_Switch(ToggleEntity):
     async def async_turn_off(self, **kwargs):
         """Turn the device off."""
         try:
-            _LOGGER.info("HA calling TURN_OFF for " + self._uri)
+            _LOGGER.info("HA calling TURN_OFF for " + self._host + "/" + self._uri)
             request = Message(code=PUT, payload=CONST_COAP_STRING_FALSE.encode("ascii"), uri=CONST_COAP_PROTOCOL + self._host + "/" + self._uri)
             response = await self._protocol.request(request).response
             self._state = False
@@ -167,7 +171,7 @@ class coap_Switch(ToggleEntity):
         try:
             request = Message(code=GET, uri=CONST_COAP_PROTOCOL + self._host + "/" + self._uri)
             response = await self._protocol.request(request).response
-            print("Payload received is: %s" % (response.payload))
+            _LOGGER.info("Payload received is: %s" % (response.payload))
             response_bool = False
             if (response.payload == b'\x01'): # TODO: make this a character rather than boolean
                 response_bool = True
