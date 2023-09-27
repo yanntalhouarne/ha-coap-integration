@@ -1,4 +1,4 @@
-"""LEMA Off-Grid interface."""
+"""HA-CoAp-Integration Switch Interface."""
 import sys
 sys.path.append("/config/custom_components/ha-coap-integration")
 
@@ -68,21 +68,18 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
     addr = ""
     index = 0
 
-    _LOGGER.info("Calling async_setup_platform() ...")
+    _LOGGER.info("Parsing coap switches from directory ...")
 
-    with open('/config/custom_components/ha-coap-integration/node_directory.txt', 'r') as f:
-        while True:
-            line = f.readline()
-            if (not line) or (line == "#\n"):
-                break
-            elif line == "%\n":
-                line = f.readline()
-                name = line[2:-1]
-                line = f.readline()
-                addr = line[2:-1]
-                tempNode = CoApNode(name, addr)
-                switchList.append(tempNode)
-                index = index + 1
+    with open('/config/custom_components/ha-coap-integration/scripts/node_directory.txt', 'r') as f:
+        input_text = f.read()
+        blocks = input_text.strip().split("==============================\n")
+        for block in blocks:
+            lines = block.strip().split('\n')
+            name = lines[0].split(': ')[1].replace('.local.', '')
+            addr = lines[1].split(': ')[1]
+            tempNode = CoApNode(name, addr)
+            switchList.append(tempNode)
+            index = index + 1
     _LOGGER.info("Loaded "+ str(index) + " MyCoap Switches from directory file.")
 
     # Add switches
@@ -101,13 +98,13 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
     # Add the entities
     async_add_entities(hass_switches)
 
-    async def async_update_switches(event):
-        """Update all the coap switches."""
-        # Update sensors based on scan_period set below which comes in from the config
-        for sw in hass_switches:
-            await sw.async_update_values()
+    # async def async_update_switches(event):
+    #     """Update all the coap switches."""
+    #     # Update sensors based on scan_period set below which comes in from the config
+    #     for sw in hass_switches:
+    #         await sw.async_update_values()
 
-    async_track_time_interval(hass, async_update_switches, timedelta(seconds=5))
+    # async_track_time_interval(hass, async_update_switches, timedelta(seconds=5))
 
 class coap_Switch(ToggleEntity):
     """Representation of a Digital Output."""
@@ -142,10 +139,11 @@ class coap_Switch(ToggleEntity):
         return self._state
 
     async def async_turn_on(self, **kwargs):
+        #_LOGGER.info("HA calling TURN_ON for " + self._host + "/" + self._uri)
         """Turn the device on."""
         try:
-            _LOGGER.info("HA calling TURN_ON for " + self._host + "/" + self._uri)
-            request = Message(code=PUT, payload=CONST_COAP_STRING_TRUE.encode("ascii"), uri=CONST_COAP_PROTOCOL + self._host + "/" + self._uri)
+            #_LOGGER.info("HA calling TURN_ON for " + self._host + "/" + self._uri)
+            request = Message(mtype=NON, code=PUT, payload=CONST_COAP_STRING_TRUE.encode("ascii"), uri=CONST_COAP_PROTOCOL + self._host + "/" + self._uri)
             response = await self._protocol.request(request).response
             self._state = True
             self.schedule_update_ha_state()
@@ -154,10 +152,12 @@ class coap_Switch(ToggleEntity):
             _LOGGER.info(e)
 
     async def async_turn_off(self, **kwargs):
+        #_LOGGER.info("HA calling TURN_OFF for " + self._host + "/" + self._uri)
         """Turn the device off."""
+        Message(code=PUT, payload=CONST_COAP_STRING_FALSE.encode("ascii"), uri=CONST_COAP_PROTOCOL + self._host + "/" + self._uri)
         try:
-            _LOGGER.info("HA calling TURN_OFF for " + self._host + "/" + self._uri)
-            request = Message(code=PUT, payload=CONST_COAP_STRING_FALSE.encode("ascii"), uri=CONST_COAP_PROTOCOL + self._host + "/" + self._uri)
+            #_LOGGER.info("HA calling TURN_OFF for " + self._host + "/" + self._uri)
+            request = Message(mtype=NON, code=PUT, payload=CONST_COAP_STRING_FALSE.encode("ascii"), uri=CONST_COAP_PROTOCOL + self._host + "/" + self._uri)
             response = await self._protocol.request(request).response
             self._state = False
             self.schedule_update_ha_state()
@@ -168,25 +168,26 @@ class coap_Switch(ToggleEntity):
     @callback
     async def async_update_values(self):
         """Update this switch."""
-        try:
-            request = Message(code=GET, uri=CONST_COAP_PROTOCOL + self._host + "/" + self._uri)
-            response = await self._protocol.request(request).response
-            _LOGGER.info("Payload received is: %s" % (response.payload))
-            response_bool = False
-            if (response.payload == b'\x01'): # TODO: make this a character rather than boolean
-                response_bool = True
+        #_LOGGER.info("Calling async_update_values() ...")
+        # try:
+        #     request = Message(code=GET, uri=CONST_COAP_PROTOCOL + self._host + "/" + self._uri)
+        #     response = await self._protocol.request(request).response
+        #     _LOGGER.info("Payload received is: %s" % (response.payload))
+        #     response_bool = False
+        #     if (response.payload == b'\x01'): # TODO: make this a character rather than boolean
+        #         response_bool = True
 
-            # Check for change
-            if (self._state != response_bool):
-                self._state = response_bool
-                #_LOGGER.info("%s changed: %s - %s" % (self._uri, response.code, str(response_bool)))
-                self.async_write_ha_state()
-            #else:
-                #_LOGGER.info("%s no change..." % (self._uri))
+        #     # Check for change
+        #     if (self._state != response_bool):
+        #         self._state = response_bool
+        #         #_LOGGER.info("%s changed: %s - %s" % (self._uri, response.code, str(response_bool)))
+        #         self.async_write_ha_state()
+        #     #else:
+        #         #_LOGGER.info("%s no change..." % (self._uri))
 
-        except Exception as e:
-            _LOGGER.info("Failed to GET resource: " + self._uri)
-            _LOGGER.info(e)
+        # except Exception as e:
+        #     _LOGGER.info("Failed to GET resource: " + self._uri)
+        #     _LOGGER.info(e)
 
     @property
     def unique_id(self):

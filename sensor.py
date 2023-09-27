@@ -1,4 +1,4 @@
-"""myCoap interface."""
+"""HA-CoAp-Integration Switch Interface."""
 import sys
 sys.path.append("/config/custom_components/ha-coap-integration")
 
@@ -64,27 +64,26 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
     addr = ""
     index = 0
 
-    with open('node_directory.txt', 'r') as f:
-        while True:
-            line = f.readline()
-            if (not line) or (line == "#\n"):
-                break
-            elif line == "%\n":
-                line = f.readline()
-                name = line[2:-1]
-                line = f.readline()
-                addr = line[2:-1]
-                tempNode = CoApNode(name, addr)
-                temperatureList.append(tempNode)
-                index = index + 1
-    print("Loaded "+ str(index) + " MyCoap Switches from directory file.")
+    _LOGGER.info("Parsing coap switches from directory ...")
+
+    with open('/config/custom_components/ha-coap-integration/scripts/node_directory.txt', 'r') as f:
+        input_text = f.read()
+        blocks = input_text.strip().split("==============================\n")
+        for block in blocks:
+            lines = block.strip().split('\n')
+            name = lines[0].split(': ')[1].replace('.local.', '')
+            addr = lines[1].split(': ')[1]
+            tempNode = CoApNode(name, addr)
+            temperatureList.append(tempNode)
+            index = index + 1
+    _LOGGER.info("Loaded "+ str(index) + " MyCoap Sensors from directory file.")
 
     # Add sensors
     for node in temperatureList:
         hass_sensors.append(
             CoAPsensorNode(
                 "["+node.ipAddr+"]",
-                "light",
+                "temperature",
                 protocol,
                 node.deviceName,
                 TEMP_CELSIUS,
@@ -114,7 +113,7 @@ class CoAPsensorNode(Entity):
     def __init__(self, host, uri, protocol, name, unit, round_places):
         """Initialize the sensor."""
 
-        print("Adding temp sensor " + name + " with address " + host)
+        _LOGGER.info("Adding temp sensor " + name + " with address " + host)
 
         self._uri = uri
         self._name = name
@@ -148,25 +147,16 @@ class CoAPsensorNode(Entity):
     async def async_update_values(self):
         """Update this sensor."""
         try:
-            # print("Update2: " + self._uri)
-            # _LOGGER.info("Update: " + self._uri)
-            request = Message(code=GET)
+            request = Message(mtype=NON, code=GET)
             _uri = CONST_COAP_PROTOCOL + self._host + "/" + self._uri
             request.set_request_uri(uri=_uri)
             response = await self._protocol.request(request).response
-            #print(response.payload)
+            #_LOGGER.info("Received " + str(int.from_bytes(response.payload)) + " from " + self._host + "/" + self._uri)
 	        # Check for change
-            if self._state != round(float(int(response.payload, 10)), self._round_places):
+            if self._state != round(float(int.from_bytes(response.payload)), self._round_places):
                 # Round result to make the ui look nice
-                self._state = round(float(int(response.payload, 10)), self._round_places)
-                #_LOGGER.info(
-                #   "Nucleo %s changed: %s - %r" % (self._uri, response.code, self._state)
-                #)
+                self._state = round(float(int.from_bytes(response.payload)), self._round_places)
                 self.async_write_ha_state()
-            #else:
-                #_LOGGER.info(
-                #    "%s no change... current value = %s" % (self._uri, self._state)
-                #)
         except Exception as e:
             _LOGGER.info("Exception - Failed to GET resource: " + self._uri)
             _LOGGER.info(e)
