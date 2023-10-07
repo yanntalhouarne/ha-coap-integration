@@ -1,6 +1,9 @@
+Hostname: nrf52840_dongle2.local.
+IPv6 Address: fdd3:3fec:2e0:1:57f2:8fbe:2396:edb7
+==============================
+Hostname: nrf52840_dongle3.local.
+IPv6 Address: fdd3:3fec:2e0:1:9c67:612e:5d05:4ca8
+==============================
 Hostname: nrf52840dongle.local.
 IPv6 Address: fdd3:3fec:2e0:1:5c67:9954:3737:69e7
-==============================
-Hostname: nrf52840_light.local.
-IPv6 Address: fdd3:3fec:2e0:1:f790:d1fc:1c4f:7ce2
 ==============================

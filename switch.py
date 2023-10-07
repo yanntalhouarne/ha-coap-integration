@@ -46,8 +46,8 @@ protocol = ""
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     {
-        vol.Required(CONF_HOST): cv.string,
-        vol.Required(CONF_FRIENDLY_NAME): cv.string,
+        vol.Optional(CONF_HOST): cv.string,
+        vol.Optional(CONF_FRIENDLY_NAME): cv.string,
         vol.Optional(CONF_SCAN_INTERVAL): cv.string
     }
 )
@@ -148,7 +148,7 @@ class coap_Switch(ToggleEntity):
             self._state = True
             self.schedule_update_ha_state()
         except Exception as e:
-            _LOGGER.info("Failed to PUT resource: " + self._uri)
+            _LOGGER.info("Failed to PUT resource: " + self._name + "/" + self._uri)
             _LOGGER.info(e)
 
     async def async_turn_off(self, **kwargs):
@@ -162,7 +162,7 @@ class coap_Switch(ToggleEntity):
             self._state = False
             self.schedule_update_ha_state()
         except Exception as e:
-            _LOGGER.info("Failed to PUT resource: " + self._uri)
+            _LOGGER.info("Failed to PUT resource: " + self._name + "/" + + self._uri)
             _LOGGER.info(e)
 
     @callback

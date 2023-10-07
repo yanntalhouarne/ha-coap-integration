@@ -37,8 +37,8 @@ CONST_COAP_STRING_FALSE = "0"
 PLATFORM_SCHEMA = vol.All(
     PLATFORM_SCHEMA.extend(
         {
-            vol.Required(CONF_HOST): cv.string,
-            vol.Required(CONF_FRIENDLY_NAME): cv.string,
+            vol.Optional(CONF_HOST): cv.string,
+            vol.Optional(CONF_FRIENDLY_NAME): cv.string,
             vol.Optional(CONF_SCAN_INTERVAL): cv.string,
         },
         extra=vol.PREVENT_EXTRA,
@@ -158,7 +158,7 @@ class CoAPsensorNode(Entity):
                 self._state = round(float(int.from_bytes(response.payload)), self._round_places)
                 self.async_write_ha_state()
         except Exception as e:
-            _LOGGER.info("Exception - Failed to GET resource: " + self._uri)
+            _LOGGER.info("Exception - Failed to GET resource: " + self._name + "/" + self._uri)
             _LOGGER.info(e)
 
     @property
