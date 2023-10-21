@@ -29,7 +29,7 @@ listener = MyListener(output_file)
 browser = ServiceBrowser(zeroconf, '_ot._udp.local.', listener)
 
 try:
-    time.sleep(5)
+    time.sleep(10)
 finally:
     zeroconf.close()
     print("Node directory updated.")

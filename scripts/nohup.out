@@ -1,0 +1,1035 @@
+ * Serving Flask app 'webhook'
+ * Debug mode: off
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+[33mPress CTRL+C to quit[0m
+127.0.0.1 - - [07/Oct/2023 18:24:03] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [07/Oct/2023 18:25:11] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [07/Oct/2023 19:01:06] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [07/Oct/2023 20:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [07/Oct/2023 21:01:06] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [07/Oct/2023 22:01:11] "POST /update_node_directory HTTP/1.1" 200 -
+Exception in thread zeroconf-ServiceBrowser-_ot._udp-2052:
+OSError: [Errno 28] No space left on device
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3.9/threading.py", line 954, in _bootstrap_inner
+    self.run()
+  File "src/zeroconf/_services/browser.py", line 583, in zeroconf._services.browser.ServiceBrowser.run
+  File "src/zeroconf/_services/browser.py", line 452, in zeroconf._services.browser._ServiceBrowserBase._fire_service_state_changed_event
+  File "src/zeroconf/_services/browser.py", line 462, in zeroconf._services.browser._ServiceBrowserBase._fire_service_state_changed_event
+  File "/home/yannpi/.local/lib/python3.9/site-packages/zeroconf/_services/__init__.py", line 56, in fire
+    h(**kwargs)
+  File "src/zeroconf/_services/browser.py", line 203, in zeroconf._services.browser._service_state_changed_from_listener.on_change
+  File "<string>", line 19, in add_service
+OSError: [Errno 28] No space left on device
+127.0.0.1 - - [07/Oct/2023 23:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [08/Oct/2023 00:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [08/Oct/2023 01:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [08/Oct/2023 02:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [08/Oct/2023 03:01:16] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [08/Oct/2023 04:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [08/Oct/2023 05:01:06] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [08/Oct/2023 06:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [08/Oct/2023 07:01:09] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [08/Oct/2023 08:01:06] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [08/Oct/2023 09:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [08/Oct/2023 10:01:10] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [08/Oct/2023 11:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [08/Oct/2023 12:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [08/Oct/2023 13:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [08/Oct/2023 14:01:07] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [08/Oct/2023 15:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [08/Oct/2023 16:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [08/Oct/2023 17:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [08/Oct/2023 18:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [08/Oct/2023 19:01:08] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [08/Oct/2023 20:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [08/Oct/2023 21:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [08/Oct/2023 22:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [08/Oct/2023 23:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [09/Oct/2023 00:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [09/Oct/2023 01:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [09/Oct/2023 02:01:15] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [09/Oct/2023 03:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [09/Oct/2023 04:01:09] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [09/Oct/2023 05:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [09/Oct/2023 06:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [09/Oct/2023 07:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [09/Oct/2023 08:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [09/Oct/2023 09:01:10] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [09/Oct/2023 10:01:09] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [09/Oct/2023 11:01:08] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [09/Oct/2023 12:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [09/Oct/2023 13:01:18] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [09/Oct/2023 14:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [09/Oct/2023 15:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [09/Oct/2023 16:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [09/Oct/2023 17:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [09/Oct/2023 18:01:14] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [09/Oct/2023 19:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [09/Oct/2023 20:01:06] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [09/Oct/2023 21:01:16] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [09/Oct/2023 22:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [09/Oct/2023 23:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [10/Oct/2023 00:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [10/Oct/2023 01:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [10/Oct/2023 02:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [10/Oct/2023 03:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [10/Oct/2023 04:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [10/Oct/2023 05:01:09] "POST /update_node_directory HTTP/1.1" 200 -
+Exception in thread zeroconf-ServiceBrowser-_ot._udp-25634:
+Traceback (most recent call last):
+  File "/usr/lib/python3.9/threading.py", line 954, in _bootstrap_inner
+    self.run()
+  File "src/zeroconf/_services/browser.py", line 583, in zeroconf._services.browser.ServiceBrowser.run
+  File "src/zeroconf/_services/browser.py", line 452, in zeroconf._services.browser._ServiceBrowserBase._fire_service_state_changed_event
+  File "src/zeroconf/_services/browser.py", line 462, in zeroconf._services.browser._ServiceBrowserBase._fire_service_state_changed_event
+  File "/home/yannpi/.local/lib/python3.9/site-packages/zeroconf/_services/__init__.py", line 56, in fire
+    h(**kwargs)
+  File "src/zeroconf/_services/browser.py", line 203, in zeroconf._services.browser._service_state_changed_from_listener.on_change
+  File "<string>", line 14, in add_service
+  File "/home/yannpi/.local/lib/python3.9/site-packages/zeroconf/_core.py", line 270, in get_service_info
+    if info.request(self, timeout, question_type):
+  File "src/zeroconf/_services/info.py", line 742, in zeroconf._services.info.ServiceInfo.request
+AssertionError
+127.0.0.1 - - [10/Oct/2023 06:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [10/Oct/2023 07:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [10/Oct/2023 08:01:06] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [10/Oct/2023 09:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [10/Oct/2023 10:01:07] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [10/Oct/2023 11:01:07] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [10/Oct/2023 12:01:13] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [10/Oct/2023 13:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [10/Oct/2023 14:01:16] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [10/Oct/2023 15:01:06] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [10/Oct/2023 16:01:15] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [10/Oct/2023 17:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [10/Oct/2023 18:01:21] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [10/Oct/2023 19:01:11] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [10/Oct/2023 20:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [10/Oct/2023 21:01:17] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [10/Oct/2023 22:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [10/Oct/2023 23:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [11/Oct/2023 00:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [11/Oct/2023 01:01:07] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [11/Oct/2023 02:01:07] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [11/Oct/2023 03:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [11/Oct/2023 04:01:14] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [11/Oct/2023 05:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [11/Oct/2023 06:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [11/Oct/2023 07:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [11/Oct/2023 08:01:14] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [11/Oct/2023 09:01:17] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [11/Oct/2023 10:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [11/Oct/2023 11:01:15] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [11/Oct/2023 12:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [11/Oct/2023 13:01:12] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [11/Oct/2023 14:01:07] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [11/Oct/2023 15:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+Exception in thread zeroconf-ServiceBrowser-_ot._udp-5842:
+Traceback (most recent call last):
+  File "/usr/lib/python3.9/threading.py", line 954, in _bootstrap_inner
+    self.run()
+  File "src/zeroconf/_services/browser.py", line 583, in zeroconf._services.browser.ServiceBrowser.run
+  File "src/zeroconf/_services/browser.py", line 452, in zeroconf._services.browser._ServiceBrowserBase._fire_service_state_changed_event
+  File "src/zeroconf/_services/browser.py", line 462, in zeroconf._services.browser._ServiceBrowserBase._fire_service_state_changed_event
+  File "/home/yannpi/.local/lib/python3.9/site-packages/zeroconf/_services/__init__.py", line 56, in fire
+    h(**kwargs)
+  File "src/zeroconf/_services/browser.py", line 203, in zeroconf._services.browser._service_state_changed_from_listener.on_change
+  File "<string>", line 14, in add_service
+  File "/home/yannpi/.local/lib/python3.9/site-packages/zeroconf/_core.py", line 270, in get_service_info
+    if info.request(self, timeout, question_type):
+  File "src/zeroconf/_services/info.py", line 742, in zeroconf._services.info.ServiceInfo.request
+AssertionError
+127.0.0.1 - - [11/Oct/2023 16:01:06] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [11/Oct/2023 17:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [11/Oct/2023 18:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [11/Oct/2023 19:01:10] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [11/Oct/2023 20:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [11/Oct/2023 21:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [11/Oct/2023 22:01:08] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [11/Oct/2023 23:01:08] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [12/Oct/2023 00:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [12/Oct/2023 01:01:08] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [12/Oct/2023 02:01:06] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [12/Oct/2023 03:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [12/Oct/2023 04:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [12/Oct/2023 05:01:07] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [12/Oct/2023 06:01:08] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [12/Oct/2023 07:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [12/Oct/2023 08:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [12/Oct/2023 09:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [12/Oct/2023 10:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [12/Oct/2023 11:01:10] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [12/Oct/2023 12:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [12/Oct/2023 13:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [12/Oct/2023 14:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [12/Oct/2023 15:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [12/Oct/2023 16:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [12/Oct/2023 17:01:07] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [12/Oct/2023 18:01:07] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [12/Oct/2023 19:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [12/Oct/2023 20:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [12/Oct/2023 21:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [12/Oct/2023 22:01:10] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [12/Oct/2023 23:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [13/Oct/2023 00:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [13/Oct/2023 01:01:10] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [13/Oct/2023 02:01:06] "POST /update_node_directory HTTP/1.1" 200 -
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...127.0.0.1 - - [13/Oct/2023 03:01:19] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [13/Oct/2023 04:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [13/Oct/2023 05:01:08] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [13/Oct/2023 06:01:09] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [13/Oct/2023 07:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [13/Oct/2023 08:01:16] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [13/Oct/2023 09:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [13/Oct/2023 10:01:08] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [13/Oct/2023 11:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [13/Oct/2023 12:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [13/Oct/2023 13:01:12] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [13/Oct/2023 14:01:14] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [13/Oct/2023 15:01:08] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [13/Oct/2023 16:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [13/Oct/2023 17:01:07] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [13/Oct/2023 18:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [13/Oct/2023 19:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [13/Oct/2023 20:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [13/Oct/2023 21:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [13/Oct/2023 22:01:06] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [13/Oct/2023 23:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [14/Oct/2023 00:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [14/Oct/2023 01:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [14/Oct/2023 02:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [14/Oct/2023 03:01:09] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [14/Oct/2023 04:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [14/Oct/2023 05:01:16] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [14/Oct/2023 06:01:09] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [14/Oct/2023 07:01:06] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [14/Oct/2023 08:01:08] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [14/Oct/2023 09:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [14/Oct/2023 10:01:06] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [14/Oct/2023 11:01:11] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [14/Oct/2023 12:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [14/Oct/2023 13:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [14/Oct/2023 14:01:06] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [14/Oct/2023 15:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [14/Oct/2023 16:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [14/Oct/2023 17:01:08] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [14/Oct/2023 18:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [14/Oct/2023 19:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [14/Oct/2023 20:01:06] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [14/Oct/2023 21:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [14/Oct/2023 22:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [14/Oct/2023 23:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [15/Oct/2023 00:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [15/Oct/2023 01:01:09] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [15/Oct/2023 02:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [15/Oct/2023 03:01:14] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [15/Oct/2023 04:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [15/Oct/2023 05:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [15/Oct/2023 06:01:19] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [15/Oct/2023 07:01:06] "POST /update_node_directory HTTP/1.1" 200 -
+Exception in thread zeroconf-ServiceBrowser-_ot._udp-12381:
+Traceback (most recent call last):
+  File "/usr/lib/python3.9/threading.py", line 954, in _bootstrap_inner
+    self.run()
+  File "src/zeroconf/_services/browser.py", line 583, in zeroconf._services.browser.ServiceBrowser.run
+  File "src/zeroconf/_services/browser.py", line 452, in zeroconf._services.browser._ServiceBrowserBase._fire_service_state_changed_event
+  File "src/zeroconf/_services/browser.py", line 462, in zeroconf._services.browser._ServiceBrowserBase._fire_service_state_changed_event
+  File "/home/yannpi/.local/lib/python3.9/site-packages/zeroconf/_services/__init__.py", line 56, in fire
+    h(**kwargs)
+  File "src/zeroconf/_services/browser.py", line 203, in zeroconf._services.browser._service_state_changed_from_listener.on_change
+  File "<string>", line 14, in add_service
+  File "/home/yannpi/.local/lib/python3.9/site-packages/zeroconf/_core.py", line 270, in get_service_info
+    if info.request(self, timeout, question_type):
+  File "src/zeroconf/_services/info.py", line 742, in zeroconf._services.info.ServiceInfo.request
+AssertionError
+127.0.0.1 - - [15/Oct/2023 08:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [15/Oct/2023 09:01:07] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [15/Oct/2023 10:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [15/Oct/2023 11:01:10] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [15/Oct/2023 12:01:17] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [15/Oct/2023 13:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [15/Oct/2023 14:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [15/Oct/2023 15:01:12] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [15/Oct/2023 16:01:08] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [15/Oct/2023 17:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [15/Oct/2023 18:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [15/Oct/2023 19:01:10] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [15/Oct/2023 20:01:06] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [15/Oct/2023 21:01:06] "POST /update_node_directory HTTP/1.1" 200 -
+Exception in thread zeroconf-ServiceBrowser-_ot._udp-17558:
+Traceback (most recent call last):
+  File "/usr/lib/python3.9/threading.py", line 954, in _bootstrap_inner
+    self.run()
+  File "src/zeroconf/_services/browser.py", line 583, in zeroconf._services.browser.ServiceBrowser.run
+  File "src/zeroconf/_services/browser.py", line 452, in zeroconf._services.browser._ServiceBrowserBase._fire_service_state_changed_event
+  File "src/zeroconf/_services/browser.py", line 462, in zeroconf._services.browser._ServiceBrowserBase._fire_service_state_changed_event
+  File "/home/yannpi/.local/lib/python3.9/site-packages/zeroconf/_services/__init__.py", line 56, in fire
+    h(**kwargs)
+  File "src/zeroconf/_services/browser.py", line 203, in zeroconf._services.browser._service_state_changed_from_listener.on_change
+  File "<string>", line 14, in add_service
+  File "/home/yannpi/.local/lib/python3.9/site-packages/zeroconf/_core.py", line 270, in get_service_info
+    if info.request(self, timeout, question_type):
+  File "src/zeroconf/_services/info.py", line 742, in zeroconf._services.info.ServiceInfo.request
+AssertionError
+127.0.0.1 - - [15/Oct/2023 22:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [15/Oct/2023 23:01:08] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [16/Oct/2023 00:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [16/Oct/2023 01:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [16/Oct/2023 02:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [16/Oct/2023 03:01:17] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [16/Oct/2023 04:01:13] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [16/Oct/2023 05:01:08] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [16/Oct/2023 06:01:08] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [16/Oct/2023 07:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [16/Oct/2023 08:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [16/Oct/2023 09:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [16/Oct/2023 10:01:13] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [16/Oct/2023 11:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [16/Oct/2023 12:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [16/Oct/2023 13:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [16/Oct/2023 14:01:10] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [16/Oct/2023 15:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [16/Oct/2023 16:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [16/Oct/2023 17:01:10] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [16/Oct/2023 18:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [16/Oct/2023 19:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [16/Oct/2023 20:01:17] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [16/Oct/2023 21:01:09] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [16/Oct/2023 22:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [16/Oct/2023 23:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [17/Oct/2023 00:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [17/Oct/2023 01:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [17/Oct/2023 02:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [17/Oct/2023 03:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [17/Oct/2023 04:01:14] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [17/Oct/2023 05:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [17/Oct/2023 06:01:14] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [17/Oct/2023 07:01:13] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [17/Oct/2023 08:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [17/Oct/2023 09:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [17/Oct/2023 10:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [17/Oct/2023 11:01:13] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [17/Oct/2023 12:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [17/Oct/2023 13:01:08] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [17/Oct/2023 14:01:07] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [17/Oct/2023 15:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [17/Oct/2023 16:01:14] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [17/Oct/2023 17:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [17/Oct/2023 18:01:15] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [17/Oct/2023 19:01:09] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [17/Oct/2023 20:01:06] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [17/Oct/2023 21:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [17/Oct/2023 22:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [17/Oct/2023 23:01:07] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [18/Oct/2023 00:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [18/Oct/2023 01:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [18/Oct/2023 02:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [18/Oct/2023 03:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [18/Oct/2023 04:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [18/Oct/2023 05:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [18/Oct/2023 06:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [18/Oct/2023 07:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+Exception in thread zeroconf-ServiceBrowser-_ot._udp-6997:
+Traceback (most recent call last):
+  File "/usr/lib/python3.9/threading.py", line 954, in _bootstrap_inner
+    self.run()
+  File "src/zeroconf/_services/browser.py", line 583, in zeroconf._services.browser.ServiceBrowser.run
+  File "src/zeroconf/_services/browser.py", line 452, in zeroconf._services.browser._ServiceBrowserBase._fire_service_state_changed_event
+  File "src/zeroconf/_services/browser.py", line 462, in zeroconf._services.browser._ServiceBrowserBase._fire_service_state_changed_event
+  File "/home/yannpi/.local/lib/python3.9/site-packages/zeroconf/_services/__init__.py", line 56, in fire
+    h(**kwargs)
+  File "src/zeroconf/_services/browser.py", line 203, in zeroconf._services.browser._service_state_changed_from_listener.on_change
+  File "<string>", line 14, in add_service
+  File "/home/yannpi/.local/lib/python3.9/site-packages/zeroconf/_core.py", line 270, in get_service_info
+    if info.request(self, timeout, question_type):
+  File "src/zeroconf/_services/info.py", line 742, in zeroconf._services.info.ServiceInfo.request
+AssertionError
+127.0.0.1 - - [18/Oct/2023 08:01:20] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [18/Oct/2023 09:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [18/Oct/2023 10:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [18/Oct/2023 11:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [18/Oct/2023 12:01:12] "POST /update_node_directory HTTP/1.1" 200 -
+
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.
+Updating _ot._udp service hostnames...
+Node directory updated.127.0.0.1 - - [18/Oct/2023 13:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [18/Oct/2023 14:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [18/Oct/2023 15:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [18/Oct/2023 16:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [18/Oct/2023 17:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [18/Oct/2023 18:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [18/Oct/2023 19:01:21] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [18/Oct/2023 20:01:08] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [18/Oct/2023 21:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [18/Oct/2023 22:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [18/Oct/2023 23:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [19/Oct/2023 00:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [19/Oct/2023 01:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [19/Oct/2023 02:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [19/Oct/2023 03:01:06] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [19/Oct/2023 04:01:15] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [19/Oct/2023 05:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [19/Oct/2023 06:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [19/Oct/2023 07:01:12] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [19/Oct/2023 08:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [19/Oct/2023 09:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [19/Oct/2023 10:01:08] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [19/Oct/2023 11:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [19/Oct/2023 12:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [19/Oct/2023 13:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [19/Oct/2023 14:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+Exception in thread zeroconf-ServiceBrowser-_ot._udp-18530:
+Traceback (most recent call last):
+  File "/usr/lib/python3.9/threading.py", line 954, in _bootstrap_inner
+    self.run()
+  File "src/zeroconf/_services/browser.py", line 583, in zeroconf._services.browser.ServiceBrowser.run
+  File "src/zeroconf/_services/browser.py", line 452, in zeroconf._services.browser._ServiceBrowserBase._fire_service_state_changed_event
+  File "src/zeroconf/_services/browser.py", line 462, in zeroconf._services.browser._ServiceBrowserBase._fire_service_state_changed_event
+  File "/home/yannpi/.local/lib/python3.9/site-packages/zeroconf/_services/__init__.py", line 56, in fire
+    h(**kwargs)
+  File "src/zeroconf/_services/browser.py", line 203, in zeroconf._services.browser._service_state_changed_from_listener.on_change
+  File "<string>", line 14, in add_service
+  File "/home/yannpi/.local/lib/python3.9/site-packages/zeroconf/_core.py", line 270, in get_service_info
+    if info.request(self, timeout, question_type):
+  File "src/zeroconf/_services/info.py", line 742, in zeroconf._services.info.ServiceInfo.request
+AssertionError
+127.0.0.1 - - [19/Oct/2023 15:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [19/Oct/2023 16:01:07] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [19/Oct/2023 17:01:09] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [19/Oct/2023 18:01:16] "POST /update_node_directory HTTP/1.1" 200 -
+[2023-10-19 18:30:45,583] ERROR in app: Exception on /update_node_directory [POST]
+Traceback (most recent call last):
+  File "/home/yannpi/.local/lib/python3.9/site-packages/flask/app.py", line 1455, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/home/yannpi/.local/lib/python3.9/site-packages/flask/app.py", line 869, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "/home/yannpi/.local/lib/python3.9/site-packages/flask/app.py", line 867, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "/home/yannpi/.local/lib/python3.9/site-packages/flask/app.py", line 852, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)
+  File "/home/yannpi/homeassistant/config/custom_components/ha-coap-integration/scripts/webhook.py", line 10, in return_response
+    exec(f.read())
+  File "<string>", line 34, in <module>
+  File "/home/yannpi/.local/lib/python3.9/site-packages/zeroconf/_core.py", line 678, in close
+    self._shutdown_threads()
+  File "/home/yannpi/.local/lib/python3.9/site-packages/zeroconf/_core.py", line 658, in _shutdown_threads
+    shutdown_loop(self.loop)
+  File "/home/yannpi/.local/lib/python3.9/site-packages/zeroconf/_utils/asyncio.py", line 123, in shutdown_loop
+    asyncio.run_coroutine_threadsafe(_async_get_all_tasks(loop), loop).result(_GET_ALL_TASKS_TIMEOUT)
+  File "/usr/lib/python3.9/concurrent/futures/_base.py", line 442, in result
+    raise TimeoutError()
+concurrent.futures._base.TimeoutError
+127.0.0.1 - - [19/Oct/2023 18:30:45] "[35m[1mPOST /update_node_directory HTTP/1.1[0m" 500 -
+127.0.0.1 - - [19/Oct/2023 18:34:32] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [19/Oct/2023 19:01:11] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [19/Oct/2023 20:01:09] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [19/Oct/2023 20:48:38] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [19/Oct/2023 21:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [19/Oct/2023 22:01:15] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [19/Oct/2023 23:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [20/Oct/2023 00:01:07] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [20/Oct/2023 01:01:09] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [20/Oct/2023 02:01:09] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [20/Oct/2023 03:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [20/Oct/2023 04:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [20/Oct/2023 05:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [20/Oct/2023 06:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [20/Oct/2023 07:01:07] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [20/Oct/2023 08:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [20/Oct/2023 09:01:10] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [20/Oct/2023 10:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [20/Oct/2023 11:01:06] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [20/Oct/2023 12:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [20/Oct/2023 13:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [20/Oct/2023 14:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [20/Oct/2023 15:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [20/Oct/2023 16:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [20/Oct/2023 17:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [20/Oct/2023 18:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+127.0.0.1 - - [20/Oct/2023 19:01:05] "POST /update_node_directory HTTP/1.1" 200 -
+Exception in thread zeroconf-ServiceBrowser-_ot._udp-2836:
+Traceback (most recent call last):
+  File "/usr/lib/python3.9/threading.py", line 954, in _bootstrap_inner
+    self.run()
+  File "src/zeroconf/_services/browser.py", line 583, in zeroconf._services.browser.ServiceBrowser.run
+  File "src/zeroconf/_services/browser.py", line 452, in zeroconf._services.browser._ServiceBrowserBase._fire_service_state_changed_event
+  File "src/zeroconf/_services/browser.py", line 462, in zeroconf._services.browser._ServiceBrowserBase._fire_service_state_changed_event
+  File "/home/yannpi/.local/lib/python3.9/site-packages/zeroconf/_services/__init__.py", line 56, in fire
+    h(**kwargs)
+  File "src/zeroconf/_services/browser.py", line 203, in zeroconf._services.browser._service_state_changed_from_listener.on_change
+  File "<string>", line 14, in add_service
+  File "/home/yannpi/.local/lib/python3.9/site-packages/zeroconf/_core.py", line 270, in get_service_info
+    if info.request(self, timeout, question_type):
+  File "src/zeroconf/_services/info.py", line 742, in zeroconf._services.info.ServiceInfo.request
+AssertionError
+127.0.0.1 - - [20/Oct/2023 20:01:18] "POST /update_node_directory HTTP/1.1" 200 -
+Exception in thread zeroconf-ServiceBrowser-_ot._udp-3596:
+Traceback (most recent call last):
+  File "/usr/lib/python3.9/threading.py", line 954, in _bootstrap_inner
+    self.run()
+[2023-10-20 21:01:12,484] ERROR in app: Exception on /update_node_directory [POST]
+Traceback (most recent call last):
+  File "/home/yannpi/.local/lib/python3.9/site-packages/flask/app.py", line 1455, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/home/yannpi/.local/lib/python3.9/site-packages/flask/app.py", line 869, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "/home/yannpi/.local/lib/python3.9/site-packages/flask/app.py", line 867, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "/home/yannpi/.local/lib/python3.9/site-packages/flask/app.py", line 852, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)
+  File "/home/yannpi/homeassistant/config/custom_components/ha-coap-integration/scripts/webhook.py", line 10, in return_response
+    exec(f.read())
+  File "<string>", line 34, in <module>
+  File "/home/yannpi/.local/lib/python3.9/site-packages/zeroconf/_core.py", line 678, in close
+    self._shutdown_threads()
+  File "/home/yannpi/.local/lib/python3.9/site-packages/zeroconf/_core.py", line 658, in _shutdown_threads
+    shutdown_loop(self.loop)
+  File "/home/yannpi/.local/lib/python3.9/site-packages/zeroconf/_utils/asyncio.py", line 123, in shutdown_loop
+    asyncio.run_coroutine_threadsafe(_async_get_all_tasks(loop), loop).result(_GET_ALL_TASKS_TIMEOUT)
+  File "/usr/lib/python3.9/concurrent/futures/_base.py", line 442, in result
+    raise TimeoutError()
+concurrent.futures._base.TimeoutError
+  File "src/zeroconf/_services/browser.py", line 583, in zeroconf._services.browser.ServiceBrowser.run
+127.0.0.1 - - [20/Oct/2023 21:01:14] "[35m[1mPOST /update_node_directory HTTP/1.1[0m" 500 -
+  File "src/zeroconf/_services/browser.py", line 452, in zeroconf._services.browser._ServiceBrowserBase._fire_service_state_changed_event
+  File "src/zeroconf/_services/browser.py", line 462, in zeroconf._services.browser._ServiceBrowserBase._fire_service_state_changed_event
+  File "/home/yannpi/.local/lib/python3.9/site-packages/zeroconf/_services/__init__.py", line 56, in fire
+    h(**kwargs)
+  File "src/zeroconf/_services/browser.py", line 203, in zeroconf._services.browser._service_state_changed_from_listener.on_change
+  File "<string>", line 14, in add_service
+  File "/home/yannpi/.local/lib/python3.9/site-packages/zeroconf/_core.py", line 270, in get_service_info
+    if info.request(self, timeout, question_type):
+  File "src/zeroconf/_services/info.py", line 746, in zeroconf._services.info.ServiceInfo.request
+  File "/home/yannpi/.local/lib/python3.9/site-packages/zeroconf/_utils/asyncio.py", line 113, in run_coro_with_timeout
+    return asyncio.run_coroutine_threadsafe(aw, loop).result(
+  File "/usr/lib/python3.9/concurrent/futures/_base.py", line 440, in result
+    return self.__get_result()
+  File "/usr/lib/python3.9/concurrent/futures/_base.py", line 389, in __get_result
+    raise self._exception
+  File "src/zeroconf/_services/info.py", line 770, in async_request
+  File "/home/yannpi/.local/lib/python3.9/site-packages/zeroconf/_core.py", line 236, in async_wait_for_start
+    raise NotRunningException
+zeroconf._exceptions.NotRunningException
