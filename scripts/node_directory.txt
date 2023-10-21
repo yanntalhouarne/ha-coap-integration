@@ -7,6 +7,3 @@ IPv6 Address: fdd3:3fec:2e0:1:9c67:612e:5d05:4ca8
 Hostname: nrf52840dk-.local.
 IPv6 Address: fdd3:3fec:2e0:1:cd79:1640:89d6:4fa7
 ==============================
-Hostname: nrf52840dongle.local.
-IPv6 Address: fdd3:3fec:2e0:1:5c67:9954:3737:69e7
-==============================

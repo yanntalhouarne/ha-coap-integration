@@ -2,11 +2,11 @@
   "domain": "ha-coap-integration",
   "name": "myCoap",
   "version": "1.0.0",
-  "config_flow": false,
+  "config_flow": true,
   "documentation": "https://www.home-assistant.io/integrations/ha-coap-integration",
   "requirements": ["aiocoap==0.4b2"],
   "ssdp": [],
-  "zeroconf": [],
+  "zeroconf": ["_meshcop._udp"],
   "homekit": {},
   "dependencies": [],
   "codeowners": [

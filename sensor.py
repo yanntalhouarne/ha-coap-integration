@@ -22,6 +22,9 @@ from homeassistant.core import callback
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.event import async_track_time_interval
+from homeassistant import config_entries, core
+
+from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -44,6 +47,39 @@ PLATFORM_SCHEMA = vol.All(
         extra=vol.PREVENT_EXTRA,
     )
 )
+
+# setup platform when new device is discovered by zeroconf
+async def async_setup_entry(
+    hass: core.HomeAssistant,
+    config_entry: config_entries.ConfigEntry,
+    async_add_entities,
+):
+    config = hass.data[DOMAIN].get(config_entry.entry_id)
+    
+    protocol = await Context.create_client_context()
+
+    hass_sensors = []
+
+    hass_sensors.append(
+        CoAPsensorNode(
+            "["+config[CONF_HOST]+"]",
+            "temperature",
+            protocol,
+            config[CONF_NAME],
+            TEMP_CELSIUS,
+            1,
+        )
+    )
+
+    async def async_update_sensors(event):
+        """Update temperature sensor."""
+        # Update sensors based on scan_period set below which comes in from the config
+        for sensor in hass_sensors:
+            await sensor.async_update_values()
+
+    # update sensor every 5 seconds
+    async_track_time_interval(hass, async_update_sensors, timedelta(seconds=60))
+
 
 # setup platform
 async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
