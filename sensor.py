@@ -14,6 +14,7 @@ import voluptuous as vol
 from homeassistant.components.sensor import PLATFORM_SCHEMA
 from homeassistant.const import (
     CONF_HOST,
+    CONF_NAME,
     CONF_FRIENDLY_NAME,
     CONF_SCAN_INTERVAL,
     TEMP_CELSIUS,
@@ -23,6 +24,7 @@ import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.event import async_track_time_interval
 from homeassistant import config_entries, core
+
 
 from .const import DOMAIN
 
@@ -86,8 +88,6 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
     """Set up a temperature sensor."""
 
     print("Set up the temperature sensor")
-
-    host = config.get(CONF_HOST)
 
     # Use all sensors by default
     hass_sensors = []

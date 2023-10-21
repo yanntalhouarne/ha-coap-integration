@@ -29,9 +29,10 @@ class myCoapConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             }
         )
 
-    async def async_step_user(self, user_input=None):
-        """User initiated config flow."""
-        return self.async_create_entry(title="HA Coap Integration", data=self.data)
+    async def async_step_zeroconf_confirm(self, user_input=None):
+        """Handle a flow initiated by zeroconf."""
+        if user_input is not None:
+            return self.async_create_entry(title="HA Coap Integration", data=self.data)
 
 
     async def async_step_zeroconf(
@@ -41,4 +42,4 @@ class myCoapConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             _LOGGER.debug("Zeroconf user_input: %s", discovery_info)
             self.name = discovery_info.hostname
             self.ipaddr = discovery_info.host
-            return await self.async_step_user()
+            return await self.async_step_zeroconf_confirm()
