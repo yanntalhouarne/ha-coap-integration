@@ -7,7 +7,6 @@ from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
-
 async def async_setup_entry(hass: core.HomeAssistant, entry: config_entries.ConfigEntry) -> bool:
     """Set up platform from a ConfigEntry."""
     hass.data.setdefault(DOMAIN, {})

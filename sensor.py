@@ -15,6 +15,7 @@ from homeassistant.components.sensor import PLATFORM_SCHEMA
 from homeassistant.const import (
     CONF_HOST,
     CONF_NAME,
+    CONF_ID,
     CONF_FRIENDLY_NAME,
     CONF_SCAN_INTERVAL,
     TEMP_CELSIUS,
@@ -39,15 +40,12 @@ CONST_COAP_STRING_FALSE = "0"
 # protocol = ""
 
 # for data validation
-PLATFORM_SCHEMA = vol.All(
-    PLATFORM_SCHEMA.extend(
-        {
-            vol.Optional(CONF_HOST): cv.string,
-            vol.Optional(CONF_FRIENDLY_NAME): cv.string,
-            vol.Optional(CONF_SCAN_INTERVAL): cv.string,
-        },
-        extra=vol.PREVENT_EXTRA,
-    )
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Required(CONF_HOST): cv.string,
+        vol.Required(CONF_NAME): cv.string,
+        vol.Required(CONF_ID): cv.positive_int,
+    }
 )
 
 # setup platform when new device is discovered by zeroconf
@@ -57,11 +55,8 @@ async def async_setup_entry(
     async_add_entities,
 ):
     config = hass.data[DOMAIN].get(config_entry.entry_id)
-    
     protocol = await Context.create_client_context()
-
     hass_sensors = []
-
     hass_sensors.append(
         CoAPsensorNode(
             "["+config[CONF_HOST]+"]",
@@ -73,74 +68,75 @@ async def async_setup_entry(
         )
     )
 
+    
+
     async def async_update_sensors(event):
         """Update temperature sensor."""
         # Update sensors based on scan_period set below which comes in from the config
         for sensor in hass_sensors:
             await sensor.async_update_values()
-
     # update sensor every 5 seconds
-    async_track_time_interval(hass, async_update_sensors, timedelta(seconds=60))
+    async_track_time_interval(hass, async_update_sensors, timedelta(seconds=CONST_DEFAULT_SCAN_PERIOD_S))
 
 
 # setup platform
-async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
-    """Set up a temperature sensor."""
+# async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
+#     """Set up a temperature sensor."""
 
-    print("Set up the temperature sensor")
+#     print("Set up the temperature sensor")
 
-    # Use all sensors by default
-    hass_sensors = []
+#     # Use all sensors by default
+#     hass_sensors = []
 
-    # Setup Async CoAP
-    protocol = await Context.create_client_context()
+#     # Setup Async CoAP
+#     protocol = await Context.create_client_context()
 
-    temperatureList = []
-    name = ""
-    addr = ""
-    index = 0
+#     temperatureList = []
+#     name = ""
+#     addr = ""
+#     index = 0
 
-    _LOGGER.info("Parsing coap switches from directory ...")
+#     _LOGGER.info("Parsing coap switches from directory ...")
 
-    with open('/config/custom_components/ha-coap-integration/scripts/node_directory.txt', 'r') as f:
-        input_text = f.read()
-        blocks = input_text.strip().split("==============================\n")
-        for block in blocks:
-            lines = block.strip().split('\n')
-            name = lines[0].split(': ')[1].replace('.local.', '')
-            addr = lines[1].split(': ')[1]
-            tempNode = CoApNode(name, addr)
-            temperatureList.append(tempNode)
-            index = index + 1
-    _LOGGER.info("Loaded "+ str(index) + " MyCoap Sensors from directory file.")
+#     with open('/config/custom_components/ha-coap-integration/scripts/node_directory.txt', 'r') as f:
+#         input_text = f.read()
+#         blocks = input_text.strip().split("==============================\n")
+#         for block in blocks:
+#             lines = block.strip().split('\n')
+#             name = lines[0].split(': ')[1].replace('.local.', '')
+#             addr = lines[1].split(': ')[1]
+#             tempNode = CoApNode(name, addr)
+#             temperatureList.append(tempNode)
+#             index = index + 1
+#     _LOGGER.info("Loaded "+ str(index) + " MyCoap Sensors from directory file.")
 
-    # Add sensors
-    for node in temperatureList:
-        hass_sensors.append(
-            CoAPsensorNode(
-                "["+node.ipAddr+"]",
-                "temperature",
-                protocol,
-                node.deviceName,
-                TEMP_CELSIUS,
-                1,
-            )
-        )
+#     # Add sensors
+#     for node in temperatureList:
+#         hass_sensors.append(
+#             CoAPsensorNode(
+#                 "["+node.ipAddr+"]",
+#                 "temperature",
+#                 protocol,
+#                 node.deviceName,
+#                 TEMP_CELSIUS,
+#                 1,
+#             )
+#         )
 
-    print("Adding temperature sensor done")
+#     print("Adding temperature sensor done")
 
-    async_add_entities(hass_sensors)
+#     async_add_entities(hass_sensors)
 
-    print("async_add_entities done")
+#     print("async_add_entities done")
 
-    async def async_update_sensors(event):
-        """Update temperature sensor."""
-        # Update sensors based on scan_period set below which comes in from the config
-        for sensor in hass_sensors:
-            await sensor.async_update_values()
+#     async def async_update_sensors(event):
+#         """Update temperature sensor."""
+#         # Update sensors based on scan_period set below which comes in from the config
+#         for sensor in hass_sensors:
+#             await sensor.async_update_values()
 
-    # update sensor every 5 seconds
-    async_track_time_interval(hass, async_update_sensors, timedelta(seconds=60))
+#     # update sensor every 5 seconds
+#     async_track_time_interval(hass, async_update_sensors, timedelta(seconds=60))
 
 
 class CoAPsensorNode(Entity):
