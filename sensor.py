@@ -16,8 +16,6 @@ from homeassistant.const import (
     CONF_HOST,
     CONF_NAME,
     CONF_ID,
-    CONF_FRIENDLY_NAME,
-    CONF_SCAN_INTERVAL,
     TEMP_CELSIUS,
 )
 from homeassistant.core import callback
@@ -44,7 +42,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     {
         vol.Required(CONF_HOST): cv.string,
         vol.Required(CONF_NAME): cv.string,
-        vol.Required(CONF_ID): cv.positive_int,
+        vol.Required(CONF_ID): cv.string,
     }
 )
 
@@ -54,7 +52,9 @@ async def async_setup_entry(
     config_entry: config_entries.ConfigEntry,
     async_add_entities,
 ):
+    _LOGGER.info("In async_setup_entry()...")
     config = hass.data[DOMAIN].get(config_entry.entry_id)
+    _LOGGER.info("Adding hostname: %s, with IPv6 address: %s and unique ID: %s", config[CONF_NAME], config[CONF_HOST], config[CONF_ID])
     protocol = await Context.create_client_context()
     hass_sensors = []
     hass_sensors.append(
@@ -68,7 +68,7 @@ async def async_setup_entry(
         )
     )
 
-    
+    async_add_entities(hass_sensors)
 
     async def async_update_sensors(event):
         """Update temperature sensor."""
@@ -145,7 +145,7 @@ class CoAPsensorNode(Entity):
     def __init__(self, host, uri, protocol, name, unit, round_places):
         """Initialize the sensor."""
 
-        _LOGGER.info("Adding temp sensor " + name + " with address " + host)
+        #_LOGGER.info("Adding temp sensor " + name + " with address " + host)
 
         self._uri = uri
         self._name = name
@@ -190,7 +190,7 @@ class CoAPsensorNode(Entity):
                 self._state = round(float(int.from_bytes(response.payload)), self._round_places)
                 self.async_write_ha_state()
         except Exception as e:
-            _LOGGER.info("Exception - Failed to GET resource: " + self._name + "/" + self._uri)
+            _LOGGER.info("Exception - Failed to GET temperature resource from " + self._name + "/" + self._uri)
             _LOGGER.info(e)
 
     @property
