@@ -138,6 +138,11 @@ class coap_Switch(ToggleEntity):
             model="v0.1",
         )
 
+    @property
+    def icon(self):
+        """Return the icon of the device."""
+        return "mdi:light-switch-off"
+
     async def async_turn_on(self, **kwargs):
         #_LOGGER.info("HA calling TURN_ON for " + self._host + "/" + self._uri)
         """Turn the device on."""

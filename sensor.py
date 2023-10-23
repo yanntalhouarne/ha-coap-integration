@@ -138,6 +138,11 @@ class CoAPsensorNode(Entity):
             manufacturer="yann",
             model="v0.1",
         )
+    
+    @property
+    def icon(self):
+        """Return the icon of the device."""
+        return "mdi:thermometer"
 
     @callback
     async def async_update_values(self):
