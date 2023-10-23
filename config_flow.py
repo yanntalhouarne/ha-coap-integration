@@ -20,7 +20,7 @@ class myCoapConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_step_zeroconf_confirm(self, user_input=None):
         """Handle a flow initiated by zeroconf."""
-        _LOGGER.info("In async_step_zeroconf_confirm()...")
+        _LOGGER.info("Zeroconf registering %s", self.name)
         if user_input is None:
             return self.async_create_entry(
                 title=self.name,
@@ -35,9 +35,9 @@ class myCoapConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             self, discovery_info: zeroconf.ZeroconfServiceInfo
         ) -> FlowResult:
             """Prepare configuration for a discovered myCoap device."""
-            _LOGGER.info("In async_step_zeroconf()...")
+            #_LOGGER.info("In async_step_zeroconf()...")
             name_string = discovery_info.name
-            to_remove = "_ot._udp.local"
+            to_remove = "._ot._udp.local."
             self.name = name_string.replace(to_remove, '')
             self.ipaddr = discovery_info.host
             # nrf52840dk-6266d5bd
@@ -48,10 +48,10 @@ class myCoapConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 # Extract the substring after '-'
                 result_string = input_string[dash_index + 1:]
             else:
-                _LOGGER.info("No '-' character found in host name.")
+                _LOGGER.info("No '-' character found in host name: %s", self.name)
             self.unique_id = result_string
             _LOGGER.info("Zeroconf discovered hostname: %s, with IPv6 address: %s and unique ID: %s", self.name, self.ipaddr, self.unique_id)
             await self.async_set_unique_id(self.unique_id)
             self._abort_if_unique_id_configured({CONF_HOST: self.ipaddr})
-            _LOGGER.info("Unique ID set.")
+            #_LOGGER.info("Unique ID set.")
             return await self.async_step_zeroconf_confirm()

@@ -22,7 +22,7 @@ from homeassistant.const import (
 )
 from homeassistant.core import callback
 import homeassistant.helpers.config_validation as cv
-from homeassistant.helpers.entity import Entity
+from homeassistant.helpers.entity import DeviceInfo, Entity
 from homeassistant.helpers.entity import ToggleEntity
 from homeassistant.helpers.event import async_track_time_interval
 from homeassistant import config_entries, core
@@ -56,7 +56,7 @@ async def async_setup_entry(
 ):
     _LOGGER.info("In async_setup_entry()...")
     config = hass.data[DOMAIN].get(config_entry.entry_id)
-    _LOGGER.info("Adding hostname: %s, with IPv6 address: %s and unique ID: %s", config[CONF_NAME], config[CONF_HOST], config[CONF_ID])
+    _LOGGER.info("Setting up entry for light entity of %s", config[CONF_NAME])
     protocol = await Context.create_client_context()
     hass_switches = []
     hass_switches.append(
@@ -67,6 +67,7 @@ async def async_setup_entry(
             config[CONF_NAME], 
             False, 
             None,
+            config[CONF_ID],
         )
     )
 
@@ -81,65 +82,10 @@ async def async_setup_entry(
 
     async_track_time_interval(hass, async_update_switches, timedelta(seconds=CONST_DEFAULT_SCAN_PERIOD_S))
 
-# # setup platform when new device is discovered by zeroconf
-# async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
-#     """Set up coap Switches """
-
-#     host = config.get(CONF_HOST)
-
-#     # Use all switches by default
-#     hass_switches = []
-
-#     # Setup Async CoAP
-#     protocol = await Context.create_client_context()
-
-#     switchList = []
-#     name = ""
-#     addr = ""
-#     index = 0
-
-#     _LOGGER.info("Parsing coap switches from directory ...")
-
-#     with open('/config/custom_components/ha-coap-integration/scripts/node_directory.txt', 'r') as f:
-#         input_text = f.read()
-#         blocks = input_text.strip().split("==============================\n")
-#         for block in blocks:
-#             lines = block.strip().split('\n')
-#             name = lines[0].split(': ')[1].replace('.local.', '')
-#             addr = lines[1].split(': ')[1]
-#             tempNode = CoApNode(name, addr)
-#             switchList.append(tempNode)
-#             index = index + 1
-#     _LOGGER.info("Loaded "+ str(index) + " MyCoap Switches from directory file.")
-
-#     # Add switches
-#     for node in switchList:
-#         hass_switches.append(
-#             coap_Switch(
-#                 "["+node.ipAddr+"]", 
-#                 "light", 
-#                 protocol, 
-#                 node.deviceName, 
-#                 False, 
-#                 None,
-#             )
-#         )
-
-#     # Add the entities
-#     async_add_entities(hass_switches)
-
-#     async def async_update_switches(event):
-#         """Update all the coap switches."""
-#         # Update sensors based on scan_period set below which comes in from the config
-#         for sw in hass_switches:
-#             await sw.async_update_values()
-
-#     async_track_time_interval(hass, async_update_switches, timedelta(seconds=CONST_DEFAULT_SCAN_PERIOD_S))
-
 class coap_Switch(ToggleEntity):
     """Representation of a Digital Output."""
 
-    def __init__(self, host, uri, protocol, name, unit, invert_logic):
+    def __init__(self, host, uri, protocol, name, unit, invert_logic, device_id):
         """Initialize the pin."""
 
         _LOGGER.info("Adding switch " + name + " with address " + host)
@@ -151,6 +97,7 @@ class coap_Switch(ToggleEntity):
         self._invert_logic = invert_logic
         self._state = False
         self._protocol = protocol
+        self._device_id = device_id
         self.async_turn_off()
 
     @property
@@ -167,6 +114,29 @@ class coap_Switch(ToggleEntity):
     def is_on(self):
         """Return true if device is on."""
         return self._state
+    
+    @property
+    def device_id(self):
+        """Return the ID of this roller."""
+        return self.self._device_id
+
+    @property
+    def unique_id(self):
+        """Return a unique identifier for this sensor."""
+        return self._device_id
+
+    @property
+    def device_info(self) -> DeviceInfo:
+        """Return the device info."""
+        return DeviceInfo(
+            identifiers={
+                # Serial numbers are unique identifiers within a specific domain
+                (DOMAIN, self.unique_id)
+            },
+            name=self.name,
+            manufacturer="yann",
+            model="v0.1",
+        )
 
     async def async_turn_on(self, **kwargs):
         #_LOGGER.info("HA calling TURN_ON for " + self._host + "/" + self._uri)
@@ -224,8 +194,3 @@ class coap_Switch(ToggleEntity):
         except Exception as e:
             _LOGGER.info("Failed to GET resource: " + self._uri)
             _LOGGER.info(e)
-
-    @property
-    def unique_id(self):
-        """Return a unique identifier for this sensor."""
-        return f"{self._name}"

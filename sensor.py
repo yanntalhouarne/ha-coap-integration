@@ -20,7 +20,7 @@ from homeassistant.const import (
 )
 from homeassistant.core import callback
 import homeassistant.helpers.config_validation as cv
-from homeassistant.helpers.entity import Entity
+from homeassistant.helpers.entity import DeviceInfo, Entity
 from homeassistant.helpers.event import async_track_time_interval
 from homeassistant import config_entries, core
 
@@ -54,7 +54,7 @@ async def async_setup_entry(
 ):
     _LOGGER.info("In async_setup_entry()...")
     config = hass.data[DOMAIN].get(config_entry.entry_id)
-    _LOGGER.info("Adding hostname: %s, with IPv6 address: %s and unique ID: %s", config[CONF_NAME], config[CONF_HOST], config[CONF_ID])
+    _LOGGER.info("Setting up entry for temperature entity of %s", config[CONF_NAME])
     protocol = await Context.create_client_context()
     hass_sensors = []
     hass_sensors.append(
@@ -65,6 +65,7 @@ async def async_setup_entry(
             config[CONF_NAME],
             TEMP_CELSIUS,
             1,
+            config[CONF_ID],
         )
     )
 
@@ -78,71 +79,10 @@ async def async_setup_entry(
     # update sensor every 5 seconds
     async_track_time_interval(hass, async_update_sensors, timedelta(seconds=CONST_DEFAULT_SCAN_PERIOD_S))
 
-
-# setup platform
-# async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
-#     """Set up a temperature sensor."""
-
-#     print("Set up the temperature sensor")
-
-#     # Use all sensors by default
-#     hass_sensors = []
-
-#     # Setup Async CoAP
-#     protocol = await Context.create_client_context()
-
-#     temperatureList = []
-#     name = ""
-#     addr = ""
-#     index = 0
-
-#     _LOGGER.info("Parsing coap switches from directory ...")
-
-#     with open('/config/custom_components/ha-coap-integration/scripts/node_directory.txt', 'r') as f:
-#         input_text = f.read()
-#         blocks = input_text.strip().split("==============================\n")
-#         for block in blocks:
-#             lines = block.strip().split('\n')
-#             name = lines[0].split(': ')[1].replace('.local.', '')
-#             addr = lines[1].split(': ')[1]
-#             tempNode = CoApNode(name, addr)
-#             temperatureList.append(tempNode)
-#             index = index + 1
-#     _LOGGER.info("Loaded "+ str(index) + " MyCoap Sensors from directory file.")
-
-#     # Add sensors
-#     for node in temperatureList:
-#         hass_sensors.append(
-#             CoAPsensorNode(
-#                 "["+node.ipAddr+"]",
-#                 "temperature",
-#                 protocol,
-#                 node.deviceName,
-#                 TEMP_CELSIUS,
-#                 1,
-#             )
-#         )
-
-#     print("Adding temperature sensor done")
-
-#     async_add_entities(hass_sensors)
-
-#     print("async_add_entities done")
-
-#     async def async_update_sensors(event):
-#         """Update temperature sensor."""
-#         # Update sensors based on scan_period set below which comes in from the config
-#         for sensor in hass_sensors:
-#             await sensor.async_update_values()
-
-#     # update sensor every 5 seconds
-#     async_track_time_interval(hass, async_update_sensors, timedelta(seconds=60))
-
-
 class CoAPsensorNode(Entity):
     """Representation of a CoAP sensor node."""
 
-    def __init__(self, host, uri, protocol, name, unit, round_places):
+    def __init__(self, host, uri, protocol, name, unit, round_places, device_id):
         """Initialize the sensor."""
 
         #_LOGGER.info("Adding temp sensor " + name + " with address " + host)
@@ -154,6 +94,7 @@ class CoAPsensorNode(Entity):
         self._state = "0"
         self._host = host
         self._protocol = protocol
+        self._device_id = device_id
 
     @property
     def name(self):
@@ -175,6 +116,29 @@ class CoAPsensorNode(Entity):
         """Sensors are polled."""
         return True
 
+    @property
+    def device_id(self):
+        """Return the ID of this roller."""
+        return self._device_id
+    
+    @property
+    def unique_id(self):
+        """Return a unique identifier for this sensor."""
+        return f"{self._name}"
+
+    @property
+    def device_info(self) -> DeviceInfo:
+        """Return the device info."""
+        return DeviceInfo(
+            identifiers={
+                # Serial numbers are unique identifiers within a specific domain
+                (DOMAIN, self.unique_id)
+            },
+            name=self.name,
+            manufacturer="yann",
+            model="v0.1",
+        )
+
     @callback
     async def async_update_values(self):
         """Update this sensor."""
@@ -192,8 +156,3 @@ class CoAPsensorNode(Entity):
         except Exception as e:
             _LOGGER.info("Exception - Failed to GET temperature resource from " + self._name + "/" + self._uri)
             _LOGGER.info(e)
-
-    @property
-    def unique_id(self):
-        """Return a unique identifier for this sensor."""
-        return f"{self._name}"
