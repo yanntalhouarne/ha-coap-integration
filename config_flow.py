@@ -28,15 +28,18 @@ class myCoapConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     ipaddr = None
     unique_id = None
 
-    async def async_step_zeroconf_confirm(self, user_input=None):
+    async def async_step_zeroconf_confirm(self, user_input=None) -> FlowResult:
         """Handle a flow initiated by zeroconf."""
         _LOGGER.info("Zeroconf registering %s", self.name)
         if user_input is None:
             return self.async_show_form(
                 step_id="zeroconf_confirm",
+                data_schema=vol.Schema({vol.Required(CONF_NAME, default=self.name): cv.string}),
                 description_placeholders={"name": self.name},
                 errors={},
             )
+        
+        self.name = user_input[CONF_NAME]
 
         return self.async_create_entry(
             title=self.name,
