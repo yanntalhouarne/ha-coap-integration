@@ -3,13 +3,23 @@ from homeassistant import config_entries, core
 from homeassistant.core import callback
 from homeassistant.components import zeroconf
 from homeassistant.data_entry_flow import FlowResult
+from homeassistant.components.switch import PLATFORM_SCHEMA
 from homeassistant.const import CONF_NAME, CONF_HOST, CONF_ID
-
+import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
 
 from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
+
+# for data validation
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+    {
+        vol.Required(CONF_HOST): cv.string,
+        vol.Required(CONF_NAME): cv.string,
+        vol.Required(CONF_ID): cv.string,
+    }
+)
 
 class myCoapConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """myCoap Custom config flow."""
@@ -22,14 +32,20 @@ class myCoapConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         """Handle a flow initiated by zeroconf."""
         _LOGGER.info("Zeroconf registering %s", self.name)
         if user_input is None:
-            return self.async_create_entry(
-                title=self.name,
-                data={
-                    CONF_NAME: self.name,
-                    CONF_HOST: self.ipaddr,
-                    CONF_ID: self.unique_id,
-                },
+            return self.async_show_form(
+                step_id="zeroconf_confirm",
+                description_placeholders={"name": self.name},
+                errors={},
             )
+
+        return self.async_create_entry(
+            title=self.name,
+            data={
+                CONF_NAME: self.name,
+                CONF_HOST: self.ipaddr,
+                CONF_ID: self.unique_id,
+            },
+        )
 
     async def async_step_zeroconf(
             self, discovery_info: zeroconf.ZeroconfServiceInfo
@@ -51,7 +67,11 @@ class myCoapConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 _LOGGER.info("No '-' character found in host name: %s", self.name)
             self.unique_id = result_string
             _LOGGER.info("Zeroconf discovered hostname: %s, with IPv6 address: %s and unique ID: %s", self.name, self.ipaddr, self.unique_id)
-            await self.async_set_unique_id(self.unique_id)
+            isUnique = await self.async_set_unique_id(self.unique_id)
+            if isUnique == None:
+                _LOGGER.info("New device ID discovered: %s", self.unique_id)
+            else:
+                _LOGGER.info("Device ID already registered: %s", self.unique_id)
             self._abort_if_unique_id_configured({CONF_HOST: self.ipaddr})
             #_LOGGER.info("Unique ID set.")
             return await self.async_step_zeroconf_confirm()

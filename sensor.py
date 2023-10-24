@@ -152,7 +152,7 @@ class CoAPsensorNode(Entity):
             _uri = CONST_COAP_PROTOCOL + self._host + "/" + self._uri
             request.set_request_uri(uri=_uri)
             response = await self._protocol.request(request).response
-            _LOGGER.info("Received " + str(int.from_bytes(response.payload)) + " from " + self._host + "/" + self._uri)
+            #_LOGGER.info("Received " + str(int.from_bytes(response.payload)) + " from " + self._host + "/" + self._uri)
 	        # Check for change
             if self._state != round(float(int.from_bytes(response.payload)), self._round_places):
                 # Round result to make the ui look nice
