@@ -92,7 +92,7 @@ class coap_Switch(ToggleEntity):
 
         self._host = host
         self._uri = uri
-        self._name = name
+        self._name = "switch"+name
         self._unit = unit
         self._invert_logic = invert_logic
         self._state = False
@@ -134,8 +134,8 @@ class coap_Switch(ToggleEntity):
                 (DOMAIN, self._device_id)
             },
             name=self.name,
-            manufacturer="yann",
-            model="v0.1",
+            manufacturer="Yann T.",
+            model="version 0.1",
         )
 
     @property
