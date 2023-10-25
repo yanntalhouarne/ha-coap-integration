@@ -1,11 +1,12 @@
 {
-  "domain": "my_coap",
-  "name": "myCoap",
-  "config_flow": false,
-  "documentation": "https://www.home-assistant.io/integrations/my_coap",
+  "domain": "ha-coap-integration",
+  "name": "OpenThread Coap",
+  "version": "1.0.0",
+  "config_flow": true,
+  "documentation": "https://www.home-assistant.io/integrations/ha-coap-integration",
   "requirements": ["aiocoap==0.4b2"],
   "ssdp": [],
-  "zeroconf": [],
+  "zeroconf": ["_ot._udp.local."],
   "homekit": {},
   "dependencies": [],
   "codeowners": [

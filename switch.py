@@ -1,11 +1,13 @@
-"""LEMA Off-Grid interface."""
+"""HA-CoAp-Integration Switch Interface."""
 import sys
-sys.path.append("/srv/homeassistant/lib/python3.9/site-packages/homeassistant/components/my_coap")
+sys.path.append("/config/custom_components/ha-coap-integration")
+
 
 from datetime import timedelta
 from myCoapNode import CoApNode
 import logging
 import asyncio
+import os
 
 # Bring in CoAP
 from aiocoap import *
@@ -15,26 +17,21 @@ import voluptuous as vol
 from homeassistant.components.switch import PLATFORM_SCHEMA
 from homeassistant.const import (
     CONF_HOST,
-    CONF_FRIENDLY_NAME,
-    CONF_SCAN_INTERVAL,
+    CONF_NAME,
+    CONF_ID,
 )
 from homeassistant.core import callback
 import homeassistant.helpers.config_validation as cv
-from homeassistant.helpers.entity import Entity
+from homeassistant.helpers.entity import DeviceInfo, Entity
 from homeassistant.helpers.entity import ToggleEntity
 from homeassistant.helpers.event import async_track_time_interval
+from homeassistant import config_entries, core
+
+from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
-CONST_DEFAULT_SCAN_PERIOD_S = 60
-
-# TODO figure out why entity_playform.py has self.scan_interval set to a string "7"
-# ...seconds.  It's used once on boot but then our switch async_setup_platform
-# completes and the exception never happens again.
-# Seems like a race condition on init or we neet to setup something else that
-# we are not doing.  See how platform is used in zwave.py
-# must have to do with vol.Optional(CONF_SCAN_INTERVAL): cv.string
-SCAN_INTERVAL = timedelta(seconds=CONST_DEFAULT_SCAN_PERIOD_S)
+CONST_DEFAULT_SCAN_PERIOD_S = 10
 
 CONST_COAP_PROTOCOL = "coap://"
 CONST_COAP_STRING_TRUE = "1"
@@ -42,57 +39,37 @@ CONST_COAP_STRING_FALSE = "0"
 
 protocol = ""
 
+# for data validation
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     {
         vol.Required(CONF_HOST): cv.string,
-        vol.Required(CONF_FRIENDLY_NAME): cv.string,
-        vol.Optional(CONF_SCAN_INTERVAL): cv.string
+        vol.Required(CONF_NAME): cv.string,
+        vol.Required(CONF_ID): cv.string,
     }
 )
 
-async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
-    """Set up coap Switches """
-
-    host = config.get(CONF_HOST)
-
-    # Use all switches by default
-    hass_switches = []
-
-    # Setup Async CoAP
+# setup platform when new device is discovered by zeroconf
+async def async_setup_entry(
+    hass: core.HomeAssistant,
+    config_entry: config_entries.ConfigEntry,
+    async_add_entities,
+):
+    _LOGGER.info("In async_setup_entry()...")
+    config = hass.data[DOMAIN].get(config_entry.entry_id)
+    _LOGGER.info("Setting up entry for light entity of %s with unique ID %s", config[CONF_NAME], config[CONF_ID])
     protocol = await Context.create_client_context()
-
-    switchList = []
-    name = ""
-    addr = ""
-    index = 0
-
-    with open('node_directory.txt', 'r') as f:
-        while True:
-            line = f.readline()
-            if (not line) or (line == "#\n"):
-                break
-            elif line == "%\n":
-                line = f.readline()
-                name = line[2:-1]
-                line = f.readline()
-                addr = line[2:-1]
-                tempNode = CoApNode(name, addr)
-                switchList.append(tempNode)
-                index = index + 1
-    print("Loaded "+ str(index) + " MyCoap Switches from directory file.")
-
-    # Add switches
-    for node in switchList:
-        hass_switches.append(
-            coap_Switch(
-                "["+node.ipAddr+"]", 
-                "switch", 
-                protocol, 
-                node.deviceName, 
-                False, 
-                None,
-            )
+    hass_switches = []
+    hass_switches.append(
+        coap_Switch(
+            "["+config[CONF_HOST]+"]",
+            "light", 
+            protocol, 
+            config[CONF_NAME], 
+            False, 
+            None,
+            config[CONF_ID],
         )
+    )
 
     # Add the entities
     async_add_entities(hass_switches)
@@ -103,15 +80,15 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
         for sw in hass_switches:
             await sw.async_update_values()
 
-    async_track_time_interval(hass, async_update_switches, timedelta(seconds=5))
+    async_track_time_interval(hass, async_update_switches, timedelta(seconds=CONST_DEFAULT_SCAN_PERIOD_S))
 
 class coap_Switch(ToggleEntity):
     """Representation of a Digital Output."""
 
-    def __init__(self, host, uri, protocol, name, unit, invert_logic):
+    def __init__(self, host, uri, protocol, name, unit, invert_logic, device_id):
         """Initialize the pin."""
 
-        print("Adding switch " + name + " with address " + host)
+        _LOGGER.info("Adding switch " + name + " with address " + host)
 
         self._host = host
         self._uri = uri
@@ -120,6 +97,7 @@ class coap_Switch(ToggleEntity):
         self._invert_logic = invert_logic
         self._state = False
         self._protocol = protocol
+        self._device_id = device_id
         self.async_turn_off()
 
     @property
@@ -136,55 +114,88 @@ class coap_Switch(ToggleEntity):
     def is_on(self):
         """Return true if device is on."""
         return self._state
+    
+    @property
+    def device_id(self):
+        """Return the ID of this roller."""
+        return self.self._device_id
+
+    @property
+    def unique_id(self):
+        """Return a unique identifier for this sensor."""
+        return self._device_id
+
+    @property
+    def device_info(self) -> DeviceInfo:
+        """Return the device info."""
+        return DeviceInfo(
+            identifiers={
+                # Serial numbers are unique identifiers within a specific domain
+                (DOMAIN, self._device_id)
+            },
+            name=self.name,
+            manufacturer="yann",
+            model="v0.1",
+        )
+
+    @property
+    def icon(self):
+        """Return the icon of the device."""
+        return "mdi:light-switch-off"
 
     async def async_turn_on(self, **kwargs):
+        #_LOGGER.info("HA calling TURN_ON for " + self._host + "/" + self._uri)
         """Turn the device on."""
         try:
-            _LOGGER.info("HA calling TURN_ON for " + self._uri)
-            request = Message(code=PUT, payload=CONST_COAP_STRING_TRUE.encode("ascii"), uri=CONST_COAP_PROTOCOL + self._host + "/" + self._uri)
+            #_LOGGER.info("HA calling TURN_ON for " + self._host + "/" + self._uri)
+            request = Message(mtype=CON, code=PUT, payload=CONST_COAP_STRING_TRUE.encode("ascii"), uri=CONST_COAP_PROTOCOL + self._host + "/" + self._uri)
             response = await self._protocol.request(request).response
-            self._state = True
-            self.schedule_update_ha_state()
+            response_bool = False
+            #_LOGGER.info("Payload received is: %s" % (response.payload))
+            if (response.payload == b'\x01'):
+                response_bool = True
+            self._state = response_bool
+            self.async_write_ha_state()
         except Exception as e:
-            _LOGGER.info("Failed to PUT resource: " + self._uri)
+            _LOGGER.info("Failed to PUT resource: " + self._name + "/" + self._uri)
             _LOGGER.info(e)
 
     async def async_turn_off(self, **kwargs):
+        #_LOGGER.info("HA calling TURN_OFF for " + self._host + "/" + self._uri)
         """Turn the device off."""
+        #Message(code=PUT, payload=CONST_COAP_STRING_FALSE.encode("ascii"), uri=CONST_COAP_PROTOCOL + self._host + "/" + self._uri)
         try:
-            _LOGGER.info("HA calling TURN_OFF for " + self._uri)
-            request = Message(code=PUT, payload=CONST_COAP_STRING_FALSE.encode("ascii"), uri=CONST_COAP_PROTOCOL + self._host + "/" + self._uri)
+            #_LOGGER.info("HA calling TURN_OFF for " + self._host + "/" + self._uri)
+            request = Message(mtype=CON, code=PUT, payload=CONST_COAP_STRING_FALSE.encode("ascii"), uri=CONST_COAP_PROTOCOL + self._host + "/" + self._uri)
             response = await self._protocol.request(request).response
-            self._state = False
-            self.schedule_update_ha_state()
+            #_LOGGER.info("Payload received is: %s" % (response.payload))
+            response_bool = False
+            if (response.payload == b'\x01'):
+                response_bool = True
+            self._state = response_bool
+            self.async_write_ha_state()
         except Exception as e:
-            _LOGGER.info("Failed to PUT resource: " + self._uri)
+            _LOGGER.info("Failed to PUT resource: " + self._name + "/" + + self._uri)
             _LOGGER.info(e)
 
     @callback
     async def async_update_values(self):
         """Update this switch."""
         try:
-            request = Message(code=GET, uri=CONST_COAP_PROTOCOL + self._host + "/" + self._uri)
-            response = await self._protocol.request(request).response
-            print("Payload received is: %s" % (response.payload))
+            #_LOGGER.info("HA calling light GET for " + self._host + "/" + self._uri)
+            request = Message(mtype=NON, code=GET, uri=CONST_COAP_PROTOCOL + self._host + "/" + self._uri)
+            response = await asyncio.wait_for(self._protocol.request(request).response, timeout = 1)
+            #_LOGGER.info("Payload received is: %s" % (response.payload))
             response_bool = False
-            if (response.payload == b'\x01'): # TODO: make this a character rather than boolean
+            if (response.payload == b'\x01'): 
                 response_bool = True
-
             # Check for change
             if (self._state != response_bool):
                 self._state = response_bool
                 #_LOGGER.info("%s changed: %s - %s" % (self._uri, response.code, str(response_bool)))
                 self.async_write_ha_state()
-            #else:
-                #_LOGGER.info("%s no change..." % (self._uri))
-
+        except asyncio.TimeoutError:
+            _LOGGER.debug("Timeout reached. Giving up.")
         except Exception as e:
             _LOGGER.info("Failed to GET resource: " + self._uri)
             _LOGGER.info(e)
-
-    @property
-    def unique_id(self):
-        """Return a unique identifier for this sensor."""
-        return f"{self._name}"
