@@ -54,7 +54,7 @@ async def async_setup_entry(
 ):
     _LOGGER.info("In async_setup_entry()...")
     config = hass.data[DOMAIN].get(config_entry.entry_id)
-    _LOGGER.info("Setting up entry for temperature entity of %s", config[CONF_NAME])
+    _LOGGER.info("Setting up entry for temperature entity of %s with unique ID %s", config[CONF_NAME], config[CONF_ID])
     protocol = await Context.create_client_context()
     hass_sensors = []
     hass_sensors.append(
@@ -124,7 +124,7 @@ class CoAPsensorNode(Entity):
     @property
     def unique_id(self):
         """Return a unique identifier for this sensor."""
-        return f"{self._name}"
+        return f"{self._device_id}"
 
     @property
     def device_info(self) -> DeviceInfo:
@@ -132,10 +132,10 @@ class CoAPsensorNode(Entity):
         return DeviceInfo(
             identifiers={
                 # Serial numbers are unique identifiers within a specific domain
-                (DOMAIN, self.unique_id)
+                (DOMAIN, self._device_id)
             },
             name=self.name,
-            manufacturer="yann",
+            manufacturer="Yann T.",
             model="v0.1",
         )
     

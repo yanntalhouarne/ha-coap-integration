@@ -56,7 +56,7 @@ async def async_setup_entry(
 ):
     _LOGGER.info("In async_setup_entry()...")
     config = hass.data[DOMAIN].get(config_entry.entry_id)
-    _LOGGER.info("Setting up entry for light entity of %s", config[CONF_NAME])
+    _LOGGER.info("Setting up entry for light entity of %s with unique ID %s", config[CONF_NAME], config[CONF_ID])
     protocol = await Context.create_client_context()
     hass_switches = []
     hass_switches.append(
@@ -131,7 +131,7 @@ class coap_Switch(ToggleEntity):
         return DeviceInfo(
             identifiers={
                 # Serial numbers are unique identifiers within a specific domain
-                (DOMAIN, self.unique_id)
+                (DOMAIN, self._device_id)
             },
             name=self.name,
             manufacturer="yann",

@@ -1,13 +1,15 @@
 {
   "config": {
-    "flow_title": "{name}",
+    "flow_title": "CoAp node discovered",
     "step": {
       "zeroconf_confirm": {
+        "title": "Discovered new ot_coap node!",
         "data": {
-          "name": "Enter device name."    
+          "name": "Enter device name"    
         },
-        "description": "Do you want to set up {name}?",
-        "title": "Discovered new ot_coap node!"
+        "data_description": {
+          "name": "Give a name to the new node"
+        }
       }
     }
   }

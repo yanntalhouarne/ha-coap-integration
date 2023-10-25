@@ -36,7 +36,6 @@ class myCoapConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 step_id="zeroconf_confirm",
                 data_schema=vol.Schema({vol.Required(CONF_NAME, default=self.name): cv.string}),
                 description_placeholders={"name": self.name},
-                errors={},
             )
         
         self.name = user_input[CONF_NAME]
