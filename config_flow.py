@@ -21,12 +21,42 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     }
 )
 
+USER_SCHEMA = vol.Schema(
+    {
+        vol.Required(CONF_HOST): cv.string,
+        vol.Required(CONF_NAME): cv.string,
+        vol.Required(CONF_ID): cv.string,
+    }
+)
+
 class myCoapConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """myCoap Custom config flow."""
 
     name = None
     ipaddr = None
     unique_id = None
+
+    async def async_step_user(self, user_input=None) -> FlowResult:
+        """Handle a flow initiated by zeroconf."""
+        _LOGGER.info("User node registering %s", self.name)
+        if user_input is None:
+            return self.async_show_form(
+                step_id="user",
+                data_schema=USER_SCHEMA,
+            )
+        
+        self.name = user_input[CONF_NAME]
+        self.ipaddr = user_input[CONF_HOST]
+        self.unique_id = user_input[CONF_ID]
+
+        return self.async_create_entry(
+            title=self.name,
+            data={
+                CONF_NAME: self.name,
+                CONF_HOST: self.ipaddr,
+                CONF_ID: self.unique_id,
+            },
+        )
 
     async def async_step_zeroconf_confirm(self, user_input=None) -> FlowResult:
         """Handle a flow initiated by zeroconf."""

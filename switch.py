@@ -92,7 +92,7 @@ class coap_Switch(ToggleEntity):
 
         self._host = host
         self._uri = uri
-        self._name = "switch."+name
+        self._name = "sw."+name
         self._unit = unit
         self._invert_logic = invert_logic
         self._state = False
