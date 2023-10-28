@@ -7,8 +7,12 @@ from homeassistant.components.switch import PLATFORM_SCHEMA
 from homeassistant.const import CONF_NAME, CONF_HOST, CONF_ID
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
-
+import asyncio
+from aiocoap import *
 from .const import DOMAIN
+
+CONST_COAP_PROTOCOL = "coap://"
+protocol = ""
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -99,6 +103,17 @@ class myCoapConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 _LOGGER.info("No '-' character found in host name: %s", self.name)
             self.unique_id = result_string
             _LOGGER.info("Zeroconf discovered hostname: %s, with IPv6 address: %s and unique ID: %s", self.name, self.ipaddr, self.unique_id)
+            # get FW version
+            # try:
+            #     _uri = CONST_COAP_PROTOCOL + self.ipaddr + "/" + "info"
+            #     _LOGGER.info("INFO URI is: %s", _uri)
+            #     protocol = await Context.create_client_context()
+            #     request = Message(mtype=CON, code=GET, uri=_uri)
+            #     response = await asyncio.wait_for(protocol.request(request).response, timeout = 1)
+            #     _LOGGER.info("INFO payload received is: %s" % (response.payload))
+            # except asyncio.TimeoutError:
+            #     _LOGGER.debug("Timeout reached for INFO resource. Giving up.")
+            # check if ID is already registered
             isUnique = await self.async_set_unique_id(self.unique_id)
             if isUnique == None:
                 _LOGGER.info("New device ID discovered: %s", self.unique_id)
