@@ -2,8 +2,19 @@
   "config": {
     "flow_title": "CoAp node discovered",
     "step": {
+      "user": {
+        "title": "New device registration",
+        "data": {
+          "name": "Device name",
+          "host": "IPv6 address (format: '[addr]')",
+          "id": "Device ID"    
+        },
+        "description": {
+          "name": "Give a name to the new node"
+        }
+      },
       "zeroconf_confirm": {
-        "title": "Discovered new ot_coap node!",
+        "title": "Discovered a new ot_coap node!",
         "data": {
           "name": "Enter device name"    
         },

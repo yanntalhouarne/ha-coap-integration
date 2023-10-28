@@ -88,7 +88,7 @@ class CoAPsensorNode(Entity):
         #_LOGGER.info("Adding temp sensor " + name + " with address " + host)
 
         self._uri = uri
-        self._name = name
+        self._name = "temp."+name
         self._unit = unit
         self._round_places = round_places
         self._state = "0"
@@ -136,7 +136,7 @@ class CoAPsensorNode(Entity):
             },
             name=self.name,
             manufacturer="Yann T.",
-            model="v0.1",
+            model="version 0.1",
         )
     
     @property
