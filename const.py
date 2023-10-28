@@ -1,1 +1,0 @@
-DOMAIN = "ha-coap-integration"
