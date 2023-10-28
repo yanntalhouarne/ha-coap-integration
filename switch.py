@@ -4,7 +4,6 @@ sys.path.append("/config/custom_components/ha-coap-integration")
 
 
 from datetime import timedelta
-from myCoapNode import CoApNode
 import logging
 import asyncio
 import os
