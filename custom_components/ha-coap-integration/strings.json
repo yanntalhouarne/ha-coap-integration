@@ -1,22 +1,22 @@
 {
   "config": {
-    "flow_title": "CoAp node discovered",
+    "flow_title": "HA CoAp node discovered",
     "step": {
       "user": {
         "title": "New device registration",
         "data": {
           "name": "Device name",
           "host": "IPv6 address (format: '[addr]')",
-          "id": "Device ID"    
+          "id": "Device ID"
         },
         "description": {
           "name": "Give a name to the new node"
         }
       },
       "zeroconf_confirm": {
-        "title": "Discovered a new ot_coap node!",
+        "title": "Discovered a new HA CoAp node!",
         "data": {
-          "name": "Enter device name"    
+          "name": "Enter device name"
         },
         "data_description": {
           "name": "Give a name to the new node"
