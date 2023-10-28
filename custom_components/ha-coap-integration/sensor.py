@@ -1,6 +1,6 @@
-"""HA-CoAp-Integration Switch Interface."""
+"""HA CoAp Switch Interface."""
 import sys
-sys.path.append("/config/custom_components/ha-coap-integration")
+#sys.path.append("/config/custom_components/ha-coap-integration")
 
 from datetime import timedelta
 import logging

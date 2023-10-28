@@ -48,7 +48,7 @@ class myCoapConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 step_id="user",
                 data_schema=USER_SCHEMA,
             )
-        
+
         self.name = user_input[CONF_NAME]
         self.ipaddr = user_input[CONF_HOST]
         self.unique_id = user_input[CONF_ID]
@@ -71,7 +71,7 @@ class myCoapConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 data_schema=vol.Schema({vol.Required(CONF_NAME, default=self.name): cv.string}),
                 description_placeholders={"name": self.name},
             )
-        
+
         self.name = user_input[CONF_NAME]
 
         return self.async_create_entry(
