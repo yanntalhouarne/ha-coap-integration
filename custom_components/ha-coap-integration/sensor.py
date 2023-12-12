@@ -16,6 +16,7 @@ from homeassistant.const import (
     CONF_NAME,
     CONF_ID,
     TEMP_CELSIUS,
+    PERCENTAGE,
 )
 from homeassistant.core import callback
 import homeassistant.helpers.config_validation as cv
@@ -51,12 +52,44 @@ async def async_setup_entry(
     config_entry: config_entries.ConfigEntry,
     async_add_entities,
 ):
-    _LOGGER.info("In async_setup_entry()...")
     config = hass.data[DOMAIN].get(config_entry.entry_id)
     _LOGGER.info("Setting up entry for temperature entity of %s with unique ID %s", config[CONF_NAME], config[CONF_ID])
     protocol = await Context.create_client_context()
-    hass_sensors = []
-    hass_sensors.append(
+    sensors = []
+    sensors.append(
+        CoAPsensorNode(
+            "["+config[CONF_HOST]+"]",
+            "soil_humidity",
+            protocol,
+            config[CONF_NAME],
+            PERCENTAGE,
+            1,
+            config[CONF_ID],
+        )
+    )
+    sensors.append(
+        CoAPsensorNode(
+            "["+config[CONF_HOST]+"]",
+            "battery",
+            protocol,
+            config[CONF_NAME],
+            PERCENTAGE,
+            1,
+            config[CONF_ID],
+        )
+    )
+    sensors.append(
+        CoAPsensorNode(
+            "["+config[CONF_HOST]+"]",
+            "air_humidity",
+            protocol,
+            config[CONF_NAME],
+            PERCENTAGE,
+            1,
+            config[CONF_ID],
+        )
+    )
+    sensors.append(
         CoAPsensorNode(
             "["+config[CONF_HOST]+"]",
             "temperature",
@@ -67,16 +100,58 @@ async def async_setup_entry(
             config[CONF_ID],
         )
     )
+    # add sensors to sensor manager
+    sensor_manager = HACoApSensorManager(protocol, "temperature", "["+config[CONF_HOST]+"]", config[CONF_NAME], sensors)
+    _LOGGER.info("Size of sensors is: %s", len(sensors))
+    async_add_entities(sensors)
+    #hass.async_add_job(endpoint.async_get_data)
+    #async_track_time_interval(hass, endpoint.async_get_data, SCAN_INTERVAL)
 
-    async_add_entities(hass_sensors)
+    # get sensor data 
+    sensor_manager.async_get_data()
 
+    # also get data periodically
     async def async_update_sensors(event):
         """Update temperature sensor."""
         # Update sensors based on scan_period set below which comes in from the config
-        for sensor in hass_sensors:
-            await sensor.async_update_values()
-    # update sensor every 5 seconds
-    async_track_time_interval(hass, async_update_sensors, timedelta(seconds=CONST_DEFAULT_SCAN_PERIOD_S))
+        #for sensor in sensors:
+        #    await sensor.async_update_values()
+        await sensor_manager.async_get_data()
+    # update sensor every 60 seconds
+    async_track_time_interval(hass, sensor_manager.async_get_data, timedelta(seconds=CONST_DEFAULT_SCAN_PERIOD_S))
+
+class HACoApSensorManager:
+    """Manages Sensors of a HA-CoAp Device"""
+
+    def __init__(self, protocol, uri, host, name, sensors):
+        """Initialize the sensor manager."""
+        #self._hass = hass
+        self._protocol = protocol
+        self._uri = uri
+        self._host = host
+        self._name = name
+        self._sensors = sensors
+
+    async def async_get_data(self, now=None):
+        """Update this sensor."""
+        try:
+            _LOGGER.info("In  async_get_data()...")
+            request = Message(mtype=NON, code=GET)
+            _uri = CONST_COAP_PROTOCOL + self._host + "/" + self._uri
+            request.set_request_uri(uri=_uri)
+            response = await self._protocol.request(request).response
+            #_LOGGER.info("Received " + response.payload + " from " + self._name + "/" + self._uri)
+            self._sensors[0]._state = round(float(response.payload[0]), self._sensors[0]._round_places)
+            self._sensors[1]._state = round(float(response.payload[1]), self._sensors[1]._round_places)
+            self._sensors[2]._state = round(float(response.payload[2]), self._sensors[2]._round_places)
+            self._sensors[3]._state = round(float(response.payload[3]), self._sensors[3]._round_places)
+            #_LOGGER.info("Temperature = " + self._sensors[0]._state + ", Battery = " + self._sensors[1]._state)
+            for sensor in self._sensors:
+                sensor.async_write_ha_state()
+        except Exception as e:
+            _LOGGER.info("Exception - Failed to GET temperature resource from " + self._name + "/" + self._uri)
+            _LOGGER.info(e)
+
 
 class CoAPsensorNode(Entity):
     """Representation of a CoAP sensor node."""
@@ -87,13 +162,14 @@ class CoAPsensorNode(Entity):
         #_LOGGER.info("Adding temp sensor " + name + " with address " + host)
 
         self._uri = uri
-        self._name = "temp."+name
+        self._name = name + "." + uri
         self._unit = unit
         self._round_places = round_places
         self._state = "0"
         self._host = host
         self._protocol = protocol
         self._device_id = device_id
+        self._unique_id = device_id + uri
 
     @property
     def name(self):
@@ -119,11 +195,11 @@ class CoAPsensorNode(Entity):
     def device_id(self):
         """Return the ID of this roller."""
         return self._device_id
-    
+
     @property
     def unique_id(self):
         """Return a unique identifier for this sensor."""
-        return f"{self._device_id}"
+        return f"{self._unique_id}"
 
     @property
     def device_info(self) -> DeviceInfo:
@@ -135,28 +211,19 @@ class CoAPsensorNode(Entity):
             },
             name=self.name,
             manufacturer="Yann T.",
-            model="version 0.1",
+            model="hw: v1.0 | fw: 9a19597",
         )
-    
+
     @property
     def icon(self):
         """Return the icon of the device."""
-        return "mdi:thermometer"
-
-    @callback
-    async def async_update_values(self):
-        """Update this sensor."""
-        try:
-            request = Message(mtype=NON, code=GET)
-            _uri = CONST_COAP_PROTOCOL + self._host + "/" + self._uri
-            request.set_request_uri(uri=_uri)
-            response = await self._protocol.request(request).response
-            _LOGGER.info("Received " + str(int.from_bytes(response.payload)) + " from " + self._host + "/" + self._uri)
-	        # Check for change
-            if self._state != round(float(int.from_bytes(response.payload)), self._round_places):
-                # Round result to make the ui look nice
-                self._state = round(float(int.from_bytes(response.payload)), self._round_places)
-                self.async_write_ha_state()
-        except Exception as e:
-            _LOGGER.info("Exception - Failed to GET temperature resource from " + self._name + "/" + self._uri)
-            _LOGGER.info(e)
+        if self._uri == "soil_humidity":
+            return "mdi:flower"
+        elif self._uri == "air_humidity":
+            return "mdi:water"
+        elif self._uri == "temperature":
+            return "mdi:thermometer"
+        elif self._uri == "battery":
+            return "mdi:battery"
+        else:
+            return "mdi:cat"
