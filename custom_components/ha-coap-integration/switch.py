@@ -30,7 +30,7 @@ from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
-CONST_DEFAULT_SCAN_PERIOD_S = 10
+CONST_DEFAULT_SCAN_PERIOD_S = 1800
 
 CONST_COAP_PROTOCOL = "coap://"
 CONST_COAP_STRING_TRUE = "1"
@@ -97,7 +97,7 @@ class coap_Switch(ToggleEntity):
         self._state = False
         self._protocol = protocol
         self._device_id = device_id
-        self.async_turn_off()
+        #self.async_turn_off()
 
     @property
     def name(self):

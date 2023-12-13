@@ -29,7 +29,7 @@ from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
-CONST_DEFAULT_SCAN_PERIOD_S = 60.0
+CONST_DEFAULT_SCAN_PERIOD_S = 3600
 
 CONST_COAP_PROTOCOL = "coap://"
 CONST_COAP_STRING_TRUE = "1"
@@ -108,7 +108,7 @@ async def async_setup_entry(
     #async_track_time_interval(hass, endpoint.async_get_data, SCAN_INTERVAL)
 
     # get sensor data 
-    sensor_manager.async_get_data()
+    await sensor_manager.async_get_data()
 
     # also get data periodically
     async def async_update_sensors(event):
