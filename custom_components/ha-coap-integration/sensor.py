@@ -29,7 +29,7 @@ from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
-CONST_DEFAULT_SCAN_PERIOD_S = 3600
+CONST_DEFAULT_SCAN_PERIOD_S = 1800
 
 CONST_COAP_PROTOCOL = "coap://"
 CONST_COAP_STRING_TRUE = "1"
@@ -141,10 +141,10 @@ class HACoApSensorManager:
             request.set_request_uri(uri=_uri)
             response = await self._protocol.request(request).response
             #_LOGGER.info("Received " + response.payload + " from " + self._name + "/" + self._uri)
-            self._sensors[0]._state = round(float(response.payload[0]), self._sensors[0]._round_places)
-            self._sensors[1]._state = round(float(response.payload[1]), self._sensors[1]._round_places)
-            self._sensors[2]._state = round(float(response.payload[2]), self._sensors[2]._round_places)
-            self._sensors[3]._state = round(float(response.payload[3]), self._sensors[3]._round_places)
+            self._sensors[0]._state = round(response.payload[0], self._sensors[0]._round_places)
+            self._sensors[1]._state = round(response.payload[1], self._sensors[1]._round_places)
+            self._sensors[2]._state = round(response.payload[2], self._sensors[2]._round_places)
+            self._sensors[3]._state = round(response.payload[3], self._sensors[3]._round_places)
             #_LOGGER.info("Temperature = " + self._sensors[0]._state + ", Battery = " + self._sensors[1]._state)
             for sensor in self._sensors:
                 sensor.async_write_ha_state()
