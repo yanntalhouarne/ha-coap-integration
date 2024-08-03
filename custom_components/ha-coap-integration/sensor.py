@@ -15,7 +15,7 @@ from homeassistant.const import (
     CONF_HOST,
     CONF_NAME,
     CONF_ID,
-    TEMP_CELSIUS,
+    UnitOfTemperature,
     PERCENTAGE,
 )
 from homeassistant.core import callback
@@ -95,7 +95,7 @@ async def async_setup_entry(
             "temperature",
             protocol,
             config[CONF_NAME],
-            TEMP_CELSIUS,
+            UnitOfTemperature.CELSIUS,
             1,
             config[CONF_ID],
         )
