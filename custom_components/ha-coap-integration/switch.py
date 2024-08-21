@@ -30,7 +30,7 @@ from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
-CONST_DEFAULT_SCAN_PERIOD_S = 1800
+CONST_DEFAULT_SCAN_PERIOD_S = 900
 
 CONST_COAP_PROTOCOL = "coap://"
 CONST_COAP_STRING_TRUE = "1"
@@ -193,6 +193,7 @@ class coap_Switch(ToggleEntity):
                 self._state = response_bool
                 #_LOGGER.info("%s changed: %s - %s" % (self._uri, response.code, str(response_bool)))
                 self.async_write_ha_state()
+            _LOGGER.info("ha-coap switch updated.")
         except asyncio.TimeoutError:
             _LOGGER.debug("Timeout reached. Giving up.")
         except Exception as e:

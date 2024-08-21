@@ -5,6 +5,8 @@ import sys
 from datetime import timedelta
 import logging
 
+import asyncio
+
 # Bring in CoAP
 from aiocoap import *
 
@@ -29,7 +31,7 @@ from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
-CONST_DEFAULT_SCAN_PERIOD_S = 1800
+CONST_DEFAULT_SCAN_PERIOD_S = 900
 
 CONST_COAP_PROTOCOL = "coap://"
 CONST_COAP_STRING_TRUE = "1"
@@ -131,6 +133,7 @@ class HACoApSensorManager:
         self._host = host
         self._name = name
         self._sensors = sensors
+        #self.sem = asyncio.Semaphore()
 
     async def async_get_data(self, now=None):
         """Update this sensor."""
@@ -139,6 +142,7 @@ class HACoApSensorManager:
             request = Message(mtype=NON, code=GET)
             _uri = CONST_COAP_PROTOCOL + self._host + "/" + self._uri
             request.set_request_uri(uri=_uri)
+            #async with self.sem:
             response = await self._protocol.request(request).response
             #_LOGGER.info("Received " + response.payload + " from " + self._name + "/" + self._uri)
             self._sensors[0]._state = round(response.payload[0], self._sensors[0]._round_places)
@@ -165,7 +169,7 @@ class CoAPsensorNode(Entity):
         self._name = name + "." + uri
         self._unit = unit
         self._round_places = round_places
-        self._state = "0"
+        self._state = 0
         self._host = host
         self._protocol = protocol
         self._device_id = device_id
