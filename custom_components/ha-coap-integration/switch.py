@@ -30,7 +30,7 @@ from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
-CONST_DEFAULT_SCAN_PERIOD_S = 900
+CONST_DEFAULT_SCAN_PERIOD_S = 600
 
 CONST_COAP_PROTOCOL = "coap://"
 CONST_COAP_STRING_TRUE = "1"
