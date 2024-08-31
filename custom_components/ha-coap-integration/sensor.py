@@ -31,7 +31,8 @@ from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
-CONST_DEFAULT_SCAN_PERIOD_S = 600
+CONST_DEFAULT_SCAN_PERIOD_S = 10
+CONST_INFO_SCAN_PERIOD_S = 10
 
 CONST_COAP_PROTOCOL = "coap://"
 CONST_COAP_STRING_TRUE = "1"
@@ -56,7 +57,7 @@ async def async_setup_entry(
     async_add_entities,
 ):
     config = hass.data[DOMAIN].get(config_entry.entry_id)
-    _LOGGER.info("Setting up entry for temperature entity of %s with unique ID %s", config[CONF_NAME], config[CONF_ID])
+    _LOGGER.info("Setting up entry for entities of %s with unique ID %s", config[CONF_NAME], config[CONF_ID])
     protocol = await Context.create_client_context()
     sensors = []
     sensors.append(
@@ -103,6 +104,28 @@ async def async_setup_entry(
             config[CONF_ID],
         )
     )
+    sensors.append(
+        CoAPsensorNode(
+            "["+config[CONF_HOST]+"]",
+            "info",
+            protocol,
+            config[CONF_NAME],
+            None,
+            1,
+            config[CONF_ID],
+        )
+    )
+    sensors.append(
+        CoAPsensorNode(
+            "["+config[CONF_HOST]+"]",
+            "info-hw",
+            protocol,
+            config[CONF_NAME],
+            None,
+            1,
+            config[CONF_ID],
+        )
+    )
     # add sensors to sensor manager
     sensor_manager = HACoApSensorManager(protocol, "temperature", "["+config[CONF_HOST]+"]", config[CONF_NAME], sensors)
     _LOGGER.info("Size of sensors is: %s", len(sensors))
@@ -110,18 +133,23 @@ async def async_setup_entry(
     #hass.async_add_job(endpoint.async_get_data)
     #async_track_time_interval(hass, endpoint.async_get_data, SCAN_INTERVAL)
 
-    # get sensor data 
-    await sensor_manager.async_get_data()
-
+    # get device data 
+    #await sensor_manager.async_get_data()
+    #await asyncio.sleep(1)
+    # get device info
+    await sensor_manager.async_get_info()
+    
     # also get data periodically
-    async def async_update_sensors(event):
-        """Update temperature sensor."""
-        # Update sensors based on scan_period set below which comes in from the config
-        #for sensor in sensors:
-        #    await sensor.async_update_values()
-        await sensor_manager.async_get_data()
-    # update sensor every 60 seconds
+    # async def async_update_sensors(event):
+    #     """Update temperature sensor."""
+    #     # Update sensors based on scan_period set below which comes in from the config
+    #     #for sensor in sensors:
+    #     #    await sensor.async_update_values()
+    #     await sensor_manager.async_get_data()
+    # update sensor data every CONST_DEFAULT_SCAN_PERIOD_S seconds
     async_track_time_interval(hass, sensor_manager.async_get_data, timedelta(seconds=CONST_DEFAULT_SCAN_PERIOD_S))
+    # update sensor every CONST_INFO_SCAN_PERIOD_S seconds
+    #async_track_time_interval(hass, sensor_manager.async_get_info, timedelta(seconds=CONST_INFO_SCAN_PERIOD_S))
 
 class HACoApSensorManager:
     """Manages Sensors of a HA-CoAp Device"""
@@ -133,33 +161,59 @@ class HACoApSensorManager:
         self._uri = uri
         self._host = host
         self._name = name
-        #self._info = info
+        self._info = " "
         self._sensors = sensors
-        #self.sem = asyncio.Semaphore()
 
     async def async_get_data(self, now=None):
-        """Update this sensor."""
+        """Update the device data."""
         try:
-            #_LOGGER.info("In  async_get_data()...")
+            _LOGGER.info("In  async_get_data()...")
             request = Message(mtype=NON, code=GET)
-            _uri = CONST_COAP_PROTOCOL + self._host + "/" + self._uri
+            _uri = CONST_COAP_PROTOCOL+self._host+"/"+self._uri
+            _LOGGER.info("Data URI is: "+_uri)
             request.set_request_uri(uri=_uri)
-            #async with self.sem:
             response = await self._protocol.request(request).response
         except Exception as e:
-            _LOGGER.info("Exception - Failed to GET temperature resource from " + self._name + "/" + self._uri)
+            _LOGGER.info("Exception - Failed to GET temperature resource from "+self._name+"/"+self._uri)
             _LOGGER.info(e)
         else:
-            #_LOGGER.info("New data received...")
-            _LOGGER.info("Received data from " + self._name + "/" + self._uri + "(" + self._host +")")
+            _LOGGER.info("Received data from "+self._name+"/"+self._uri+"(" + self._host +")")
             self._sensors[0]._state = round(float(response.payload[0]), self._sensors[0]._round_places)
             self._sensors[1]._state = round(float(response.payload[1]), self._sensors[1]._round_places)
             self._sensors[2]._state = round(float(response.payload[2]), self._sensors[2]._round_places)
             self._sensors[3]._state = round(float(response.payload[3]), self._sensors[3]._round_places)
-            _LOGGER.info("Soil humidity = " + str(self._sensors[0]._state) + ", Battery = " + str(self._sensors[1]._state) + ", Air humidity = " + str(self._sensors[2]._state) + ", Temperature = " + str(self._sensors[3]._state))
-            for sensor in self._sensors:
+            _LOGGER.info("Soil humidity = "+str(self._sensors[0]._state)+", Battery = "+str(self._sensors[1]._state)+", Air humidity = "+str(self._sensors[2]._state)+", Temperature = "+str(self._sensors[3]._state))
+            for sensor in self._sensors[:4]:
                 sensor.async_write_ha_state()
-            _LOGGER.info("Sensors updated...")
+            _LOGGER.info("Device data updated...")
+
+    async def async_get_info(self, now=None):
+        """Update the device info."""
+        try:
+            _LOGGER.info("In  async_get_info()...")
+            request = Message(mtype=CON, code=GET)
+            _uri = CONST_COAP_PROTOCOL+self._host+"/"+"info"
+            _LOGGER.info("Info URI is: "+_uri)
+            request.set_request_uri(uri=_uri)
+            response = await self._protocol.request(request).response
+        except Exception as e:
+            _LOGGER.info("Exception - Failed to GET info resource from "+self._name+"/"+"info")
+            _LOGGER.info(e)
+        else:
+            #_LOGGER.info("New data received...")
+            _LOGGER.info("Received data from "+self._name+"/"+"info"+" ("+self._host +")")
+            self._sensors[4]._state, self._sensors[5]._state = str(response.payload).rsplit(',', 1)
+            _LOGGER.info("FW version is: " + self._sensors[4]._state.strip('b\''))
+            _LOGGER.info("HW version is: " + self._sensors[5]._state[: -5])
+            self._sensors[4]._state = self._sensors[4]._state.strip('b\'')
+            self._sensors[5]._state = self._sensors[5]._state[: -5]
+            # update each sensor's info entity
+            for sensor in self._sensors[:4]:
+                sensor._info = str(response.payload)
+            # update sensor manager's info
+            self._info = str(response.payload)
+            
+            _LOGGER.info("Device info fetched...")
 
 
 class CoAPsensorNode(Entity):
@@ -179,7 +233,7 @@ class CoAPsensorNode(Entity):
         self._protocol = protocol
         self._device_id = device_id
         self._unique_id = device_id + uri
-        #self._info = info
+        self._info = " "
 
     @property
     def name(self):
@@ -191,10 +245,10 @@ class CoAPsensorNode(Entity):
         """Return the state of the sensor."""
         return self._state
 
-    # @property
-    # def info(self):
-    #     """Return the state of the sensor."""
-    #     return self._info
+    @property
+    def info(self):
+        """Return device info."""
+        return self._info
 
     @property
     def unit_of_measurement(self):
@@ -203,17 +257,17 @@ class CoAPsensorNode(Entity):
 
     @property
     def poll(self):
-        """Sensors are polled."""
+        """Sensor is polled."""
         return True
 
     @property
     def device_id(self):
-        """Return the ID of this roller."""
+        """Return the ID of the sensor."""
         return self._device_id
 
     @property
     def unique_id(self):
-        """Return a unique identifier for this sensor."""
+        """Return a unique identifier for the sensor."""
         return f"{self._unique_id}"
 
     @property
@@ -226,7 +280,7 @@ class CoAPsensorNode(Entity):
             },
             name=self.name,
             manufacturer="Yann T.",
-            model="hw: v1.0 | fw: 9a19597",
+            model=self._info
         )
 
     @property
@@ -240,5 +294,9 @@ class CoAPsensorNode(Entity):
             return "mdi:thermometer"
         elif self._uri == "battery":
             return "mdi:battery"
+        elif self._uri == "info":
+            return "mdi:information"
+        elif self._uri == "info-hw":
+            return "mdi:information-outline" 
         else:
             return "mdi:cat"

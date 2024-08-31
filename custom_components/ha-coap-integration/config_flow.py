@@ -4,7 +4,7 @@ from homeassistant.core import callback
 from homeassistant.components import zeroconf
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.components.switch import PLATFORM_SCHEMA
-from homeassistant.const import CONF_NAME, CONF_HOST, CONF_ID, CONF_MODEL
+from homeassistant.const import CONF_NAME, CONF_HOST, CONF_ID
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
 import asyncio
@@ -22,7 +22,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Required(CONF_HOST): cv.string,
         vol.Required(CONF_NAME): cv.string,
         vol.Required(CONF_ID): cv.string,
-        vol.Required(CONF_MODEL): cv.string,
+        #vol.Required(CONF_MODEL): cv.string,
     }
 )
 
@@ -31,7 +31,7 @@ USER_SCHEMA = vol.Schema(
         vol.Required(CONF_HOST): cv.string,
         vol.Required(CONF_NAME): cv.string,
         vol.Required(CONF_ID): cv.string,
-        vol.Required(CONF_MODEL): cv.string,
+        #vol.Required(CONF_MODEL): cv.string,
     }
 )
 
@@ -41,7 +41,7 @@ class myCoapConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     name = None
     ipaddr = None
     unique_id = None
-    model = None
+    #model = None
 
     async def async_step_user(self, user_input=None) -> FlowResult:
         """Handle a flow initiated by zeroconf."""
@@ -55,7 +55,7 @@ class myCoapConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self.name = user_input[CONF_NAME]
         self.ipaddr = user_input[CONF_HOST]
         self.unique_id = user_input[CONF_ID]
-        self.model = user_input[CONF_MODEL]
+        #self.model = user_input[CONF_MODEL]
 
         return self.async_create_entry(
             title=self.name,
@@ -63,7 +63,7 @@ class myCoapConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 CONF_NAME: self.name,
                 CONF_HOST: self.ipaddr,
                 CONF_ID: self.unique_id,
-                CONF_MODEL: self.model,
+                #CONF_MODEL: self.model,
             },
         )
 
@@ -85,7 +85,7 @@ class myCoapConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 CONF_NAME: self.name,
                 CONF_HOST: self.ipaddr,
                 CONF_ID: self.unique_id,
-                CONF_MODEL: self.model,
+                #CONF_MODEL: self.model,
             },
         )
 
@@ -94,7 +94,7 @@ class myCoapConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         ) -> FlowResult:
             """Prepare configuration for a discovered myCoap device."""
             #_LOGGER.info("In async_step_zeroconf()...")
-            protocol = await Context.create_client_context()
+            #protocol = await Context.create_client_context()
             name_string = discovery_info.name
             to_remove = "._ot._udp.local."
             self.name = name_string.replace(to_remove, '')
@@ -109,7 +109,6 @@ class myCoapConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             else:
                 _LOGGER.info("No '-' character found in host name: %s", self.name)
             self.unique_id = result_string
-            self.model = "v2.000"
             _LOGGER.info("Zeroconf discovered hostname: %s, with IPv6 address: %s and unique ID: %s", self.name, self.ipaddr, self.unique_id)
 
             # check if ID is already registered
@@ -119,15 +118,15 @@ class myCoapConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             else:
                 _LOGGER.info("Device ID already registered: %s", self.unique_id)
             # get FW version
-            try:
-                _uri = CONST_COAP_PROTOCOL + "[" + self.ipaddr + "]" + "/" + "info"
-                _LOGGER.info("INFO URI is: %s", _uri)
-                request = Message(mtype=CON, code=GET, uri=_uri)
-                response = await protocol.request(request).response
-                _LOGGER.info("INFO payload received is: %s" % str(response.payload))
-                #self.model = str(response.payload)
-            except Exception as e:
-                _LOGGER.debug("Timeout reached for INFO resource. Giving up.")
+            # try:
+            #     _uri = CONST_COAP_PROTOCOL + "[" + self.ipaddr + "]" + "/" + "info"
+            #     _LOGGER.info("INFO URI is: %s", _uri)
+            #     request = Message(mtype=CON, code=GET, uri=_uri)
+            #     response = await protocol.request(request).response
+            #     _LOGGER.info("INFO payload received is: %s" % str(response.payload))
+            #     #self.model = str(response.payload)
+            # except Exception as e:
+            #     _LOGGER.debug("Timeout reached for INFO resource. Giving up.")
             self._abort_if_unique_id_configured({CONF_HOST: self.ipaddr})
             #_LOGGER.info("Unique ID set.")
             return await self.async_step_zeroconf_confirm()

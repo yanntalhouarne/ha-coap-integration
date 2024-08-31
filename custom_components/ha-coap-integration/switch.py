@@ -134,7 +134,7 @@ class coap_Switch(ToggleEntity):
             },
             name=self.name,
             manufacturer="Yann T.",
-            model="version 0.1",
+            #model="version 0.1",
         )
 
     @property
