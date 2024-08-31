@@ -31,8 +31,8 @@ from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
-CONST_DEFAULT_SCAN_PERIOD_S = 10
-CONST_INFO_SCAN_PERIOD_S = 10
+CONST_DEFAULT_SCAN_PERIOD_S = 30
+CONST_INFO_SCAN_PERIOD_S = 60
 
 CONST_COAP_PROTOCOL = "coap://"
 CONST_COAP_STRING_TRUE = "1"
@@ -149,7 +149,7 @@ async def async_setup_entry(
     # update sensor data every CONST_DEFAULT_SCAN_PERIOD_S seconds
     async_track_time_interval(hass, sensor_manager.async_get_data, timedelta(seconds=CONST_DEFAULT_SCAN_PERIOD_S))
     # update sensor every CONST_INFO_SCAN_PERIOD_S seconds
-    #async_track_time_interval(hass, sensor_manager.async_get_info, timedelta(seconds=CONST_INFO_SCAN_PERIOD_S))
+    async_track_time_interval(hass, sensor_manager.async_get_info, timedelta(seconds=CONST_INFO_SCAN_PERIOD_S))
 
 class HACoApSensorManager:
     """Manages Sensors of a HA-CoAp Device"""
