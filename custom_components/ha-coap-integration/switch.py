@@ -36,7 +36,7 @@ from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
-CONST_DEFAULT_SCAN_PERIOD_S = 30
+CONST_DEFAULT_SCAN_PERIOD_S = 300 # 5min
 
 CONST_COAP_PROTOCOL = "coap://"
 CONST_COAP_STRING_TRUE = "1"
@@ -202,7 +202,7 @@ class coap_Switch(ToggleEntity):
         try:
             _LOGGER.info("Sending NON GET request to "+self._name+"/"+self._uri+"(" + self._host +")")
             request = Message(mtype=NON, code=GET, uri=CONST_COAP_PROTOCOL + self._host + "/" + self._uri)
-            _LOGGER.info("URI is %: " + CONST_COAP_PROTOCOL + self._host + "/" + self._uri)
+            #_LOGGER.info("URI is : " + CONST_COAP_PROTOCOL + self._host + "/" + self._uri)
             response = await self._protocol.request(request).response
         except Exception as e:
             _LOGGER.info(" -> Exception - Failed to GET resource (mid = "+str(request.mid)+") from "+self._name+"/"+self._uri+" (" + self._host +")")
