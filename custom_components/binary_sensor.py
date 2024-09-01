@@ -29,6 +29,12 @@ import aiocoap.defaults
 # Set new values for ACK timeout and max retransmissions
 aiocoap.defaults.ACK_TIMEOUT = 10.0  # Wait 5 seconds for an ACK
 aiocoap.defaults.MAX_RETRANSMIT = 3  # Retransmit up to 5 times
+
+# aiocoap
+import aiocoap.defaults
+# Set new values for ACK timeout and max retransmissions
+aiocoap.defaults.ACK_TIMEOUT = 10.0  # Wait 5 seconds for an ACK
+aiocoap.defaults.MAX_RETRANSMIT = 3  # Retransmit up to 5 times
 # Bring in CoAP
 from aiocoap import *
 
@@ -177,12 +183,13 @@ class coap_BinarySensor(ToggleEntity):
                 command = payload=CONST_COAP_STRING_TRUE.encode("ascii")
             else:
                 command = payload=CONST_COAP_STRING_FALSE.encode("ascii")
-            _LOGGER.info("Sending NON PUT request with payload "+str(command)+" to "+self._name+"/"+self._uri+"(" + self._host +")")
-            request = Message(mtype=NON, code=PUT, payload=command,  uri=CONST_COAP_PROTOCOL + self._host + "/" + self._uri)
+            _LOGGER.info("Sending CON PUT request with payload "+str(command)+" to "+self._name+"/"+self._uri+"(" + self._host +")")
+            request = Message(mtype=CON, code=PUT, payload=command,  uri=CONST_COAP_PROTOCOL + self._host + "/" + self._uri)
             #_LOGGER.info("URI is %: " + CONST_COAP_PROTOCOL + self._host + "/" + self._uri)
             response = await self._protocol.request(request).response
         except Exception as e:
             _LOGGER.info(" -> Exception - Failed to GET resource (mid = "+str(request.mid)+") from "+self._name+"/"+self._uri+" (" + self._host +")")
+            _LOGGER.info(" -> Lost connection with "+self._name+"/"+self._uri+" (" + self._host +")")
             self._state = response_bool
             self.async_write_ha_state()
             _LOGGER.info(e)
