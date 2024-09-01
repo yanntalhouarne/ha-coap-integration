@@ -77,9 +77,9 @@ async def async_setup_entry(
 
     # Add the entities
     async_add_entities(hass_switches)
-    _LOGGER.info(" -> %s switch entities have been added to device %s", len(hass_switches), config[CONF_NAME])
+    _LOGGER.info("-> %s switch entities have been added to device %s", len(hass_switches), config[CONF_NAME])
     for sw in hass_switches:
-        _LOGGER.info("    - %s", sw._uri)
+        _LOGGER.info("- %s", sw._uri)
 
     async def async_update_switches(event):
         """Update all the coap switches."""
@@ -160,8 +160,8 @@ class coap_Switch(ToggleEntity):
         #_LOGGER.info("HA calling TURN_ON for " + self._host + "/" + self._uri)
         """Turn the device on."""
         try:
-            _LOGGER.info("Sending CON PUT request with payload '1' to " +  self._name+"/"+self._uri+"(" + self._host +")")
             request = Message(mtype=CON, code=PUT, payload=CONST_COAP_STRING_TRUE.encode("ascii"), uri=CONST_COAP_PROTOCOL + self._host + "/" + self._uri)
+            _LOGGER.info("Sending CON PUT request with payload '1' to " +  self._name+"/"+self._uri+"(" + self._host +")")
             response = await self._protocol.request(request).response
         except Exception as e:
             _LOGGER.info(" -> Exception - Failed to PUT "+self._uri+" resource with payload 1 to "+self._name+"/"+self._uri)
@@ -172,18 +172,18 @@ class coap_Switch(ToggleEntity):
                 response_bool = True
             self._state = response_bool
             self.async_write_ha_state()
-            _LOGGER.info(" -> Switch turned ON: "+self._name+"/"+self._uri+"(" + self._host +")")
+            _LOGGER.info("-> Switch turned ON: "+self._name+"/"+self._uri+"(" + self._host +")")
 
     async def async_turn_off(self, **kwargs):
         #_LOGGER.info("HA calling TURN_OFF for " + self._host + "/" + self._uri)
         """Turn the device off."""
         #Message(code=PUT, payload=CONST_COAP_STRING_FALSE.encode("ascii"), uri=CONST_COAP_PROTOCOL + self._host + "/" + self._uri)
         try:
-            _LOGGER.info("Sending CON PUT request with payload '0' to " + self._name+"/"+self._uri+"(" + self._host +")")
             request = Message(mtype=CON, code=PUT, payload=CONST_COAP_STRING_FALSE.encode("ascii"), uri=CONST_COAP_PROTOCOL + self._host + "/" + self._uri)
+            _LOGGER.info("Sending CON PUT request with payload '0' to " + self._name+"/"+self._uri+"(" + self._host +")")
             response = await self._protocol.request(request).response
         except Exception as e:
-            _LOGGER.info(" -> Exception - Failed to PUT "+self._uri+" resource with payload 0 to "+self._name+"/"+self._uri)
+            _LOGGER.info("-> Exception - Failed to PUT "+self._uri+" resource (token = "+request.token+") with payload 0 to "+self._name+"/"+self._uri)
             _LOGGER.info(e)
         else:    
             response_bool = False
@@ -191,7 +191,7 @@ class coap_Switch(ToggleEntity):
                 response_bool = True
             self._state = response_bool
             self.async_write_ha_state()
-            _LOGGER.info(" -> Switch turned OFF: "+self._name+"/"+self._uri+"(" + self._host +")")
+            _LOGGER.info("-> Switch turned OFF (mid = "+str(request.mid)+"): "+self._name+"/"+self._uri+"(" + self._host +")")
 
     @callback
     async def async_update_values(self):
@@ -201,7 +201,7 @@ class coap_Switch(ToggleEntity):
             request = Message(mtype=NON, code=GET, uri=CONST_COAP_PROTOCOL + self._host + "/" + self._uri)
             response = await self._protocol.request(request).response
         except Exception as e:
-            _LOGGER.info(" -> Exception - Failed to GET "+self._uri+" resource from "+self._name+"/"+self._uri)
+            _LOGGER.info(" -> Exception - Failed to GET resource (mid = "+str(request.mid)+") from "+self._name+"/"+self._uri+"(" + self._host +")")
             _LOGGER.info(e)
         else:
             #_LOGGER.info("Payload received is: %s" % (response.payload))
@@ -213,4 +213,4 @@ class coap_Switch(ToggleEntity):
                 self._state = response_bool
                 #_LOGGER.info("%s changed: %s - %s" % (self._uri, response.code, str(response_bool)))
             self.async_write_ha_state()
-            _LOGGER.info(" -> Received '"+str(response.payload)+"'"+self._name+"/"+self._uri+"(" + self._host +")")
+            _LOGGER.info(" -> Received '"+str(response.payload)+"' (mid = "+str(request.mid)+") from "+self._name+"/"+self._uri+"(" + self._host +")")
