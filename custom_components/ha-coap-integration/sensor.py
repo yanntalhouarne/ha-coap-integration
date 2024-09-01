@@ -36,11 +36,14 @@ from .const import DOMAIN
 _LOGGER = logging.getLogger(__name__)
 
 CONST_DEFAULT_SCAN_PERIOD_S = 30
-CONST_INFO_SCAN_PERIOD_S = 30
+CONST_INFO_SCAN_PERIOD_S = 3600
 
 CONST_COAP_PROTOCOL = "coap://"
 CONST_COAP_STRING_TRUE = "1"
 CONST_COAP_STRING_FALSE = "0"
+
+CONST_COAP_DATA_URI = "temperature"
+CONST_COAP_INFO_URI = "info"
 
 # protocol = ""
 
@@ -66,9 +69,8 @@ async def async_setup_entry(
     sensors = []
     sensors.append(
         CoAPsensorNode(
-            "["+config[CONF_HOST]+"]",
             "soil_humidity",
-            protocol,
+            CONST_COAP_DATA_URI,
             config[CONF_NAME],
             PERCENTAGE,
             1,
@@ -77,9 +79,8 @@ async def async_setup_entry(
     )
     sensors.append(
         CoAPsensorNode(
-            "["+config[CONF_HOST]+"]",
             "battery",
-            protocol,
+            CONST_COAP_DATA_URI,
             config[CONF_NAME],
             PERCENTAGE,
             1,
@@ -88,9 +89,8 @@ async def async_setup_entry(
     )
     sensors.append(
         CoAPsensorNode(
-            "["+config[CONF_HOST]+"]",
             "air_humidity",
-            protocol,
+            CONST_COAP_DATA_URI,
             config[CONF_NAME],
             PERCENTAGE,
             1,
@@ -99,9 +99,8 @@ async def async_setup_entry(
     )
     sensors.append(
         CoAPsensorNode(
-            "["+config[CONF_HOST]+"]",
             "temperature",
-            protocol,
+            CONST_COAP_DATA_URI,
             config[CONF_NAME],
             UnitOfTemperature.CELSIUS,
             1,
@@ -110,9 +109,8 @@ async def async_setup_entry(
     )
     sensors.append(
         CoAPsensorNode(
-            "["+config[CONF_HOST]+"]",
             "info",
-            protocol,
+            CONST_COAP_INFO_URI,
             config[CONF_NAME],
             None,
             1,
@@ -121,9 +119,8 @@ async def async_setup_entry(
     )
     sensors.append(
         CoAPsensorNode(
-            "["+config[CONF_HOST]+"]",
             "info-hw",
-            protocol,
+            CONST_COAP_INFO_URI,
             config[CONF_NAME],
             None,
             1,
@@ -131,11 +128,11 @@ async def async_setup_entry(
         )
     )
     # add sensors to sensor manager
-    sensor_manager = HACoApSensorManager(protocol, "temperature", "["+config[CONF_HOST]+"]", config[CONF_NAME], sensors)
+    sensor_manager = HACoApSensorManager(protocol, "["+config[CONF_HOST]+"]", config[CONF_NAME], sensors)
     _LOGGER.info("-> %s data entities have been added to device %s", len(sensors), config[CONF_NAME])
     async_add_entities(sensors)
     for sensor in sensors:
-        _LOGGER.info("    - %s", sensor._uri)
+        _LOGGER.info("- %s", sensor._sensor_type)
     #hass.async_add_job(endpoint.async_get_data)
     #async_track_time_interval(hass, endpoint.async_get_data, SCAN_INTERVAL)
 
@@ -162,11 +159,10 @@ async def async_setup_entry(
 class HACoApSensorManager:
     """Manages Sensors of a HA-CoAp Device"""
 
-    def __init__(self, protocol, uri, host, name, sensors):
+    def __init__(self, protocol, host, name, sensors):
         """Initialize the sensor manager."""
         #self._hass = hass
         self._protocol = protocol
-        self._uri = uri
         self._host = host
         self._name = name
         self._info = " "
@@ -175,16 +171,20 @@ class HACoApSensorManager:
     async def async_get_data(self, now=None):
         """Update the device data."""
         try:
+            # make sure all data sensors have the same URI 
+            for sensor in self._sensors[:4]:
+                if sensor.uri != CONST_COAP_DATA_URI:
+                    raise Exception("In device %s, not all data sensors have the same URI.")
             request = Message(mtype=NON, code=GET)
-            _uri = CONST_COAP_PROTOCOL+self._host+"/"+self._uri
-            _LOGGER.info("Sending NON GET request to " +  self._name+"/"+self._uri+"(" + self._host +")")
+            _uri = CONST_COAP_PROTOCOL+self._host+"/"+CONST_COAP_DATA_URI
+            _LOGGER.info("Sending NON GET request to " +  self._name+"/"+CONST_COAP_DATA_URI+"(" + self._host +")")
             request.set_request_uri(uri=_uri)
             response = await self._protocol.request(request).response
         except Exception as e:
-            _LOGGER.info("-> Exception - Failed to GET temperature resource  (mid = "+str(request.mid)+") from "+self._name+"/"+self._uri)
+            _LOGGER.info("-> Exception - Failed to GET '"+CONST_COAP_DATA_URI+"'resource  (mid = "+str(request.mid)+") from "+self._name+"/"+CONST_COAP_DATA_URI)
             _LOGGER.info(e)
         else:
-            _LOGGER.info("-> Received data (mid = "+str(request.mid)+") from "+self._name+"/"+self._uri+"(" + self._host +")")
+            _LOGGER.info("-> Received data (mid = "+str(request.mid)+") from "+self._name+"/"+CONST_COAP_DATA_URI+"("+ self._host +")")
             self._sensors[0]._state = round(float(response.payload[0]), self._sensors[0]._round_places)
             self._sensors[1]._state = round(float(response.payload[1]), self._sensors[1]._round_places)
             self._sensors[2]._state = round(float(response.payload[2]), self._sensors[2]._round_places)
@@ -199,22 +199,22 @@ class HACoApSensorManager:
         try:
             _LOGGER.info("In  async_get_info()...")
             request = Message(mtype=CON, code=GET)
-            _uri = CONST_COAP_PROTOCOL+self._host+"/"+"info"
-            _LOGGER.info("Sending CON GET request to " +  self._name+"/"+self._uri+"(" + self._host +")")
+            _uri = CONST_COAP_PROTOCOL+self._host+"/"+CONST_COAP_INFO_URI
+            _LOGGER.info("Sending CON GET request to " +  self._name+"/"+CONST_COAP_INFO_URI+"(" + self._host +")")
             request.set_request_uri(uri=_uri)
             response = await self._protocol.request(request).response
         except Exception as e:
-            _LOGGER.info("-> Exception - Failed to GET info resource (mid = "+str(request.mid)+") from "+self._name+"/"+"info")
+            _LOGGER.info("-> Exception - Failed to GET '"+CONST_COAP_INFO_URI+"' resource (mid = "+str(request.mid)+") from "+self._name+"/"+CONST_COAP_INFO_URI)
             _LOGGER.info(e)
         else:
             #_LOGGER.info("New data received...")
-            _LOGGER.info("-> Received data (mid = "+str(request.mid)+") from "+self._name+"/"+"info"+" ("+self._host +")")
+            _LOGGER.info("-> Received data (mid = "+str(request.mid)+") from "+self._name+"/"+CONST_COAP_INFO_URI+" ("+self._host +")")
             self._sensors[4]._state, self._sensors[5]._state = str(response.payload).rsplit(',', 1)
             _LOGGER.info("- FW version is: " + self._sensors[4]._state.strip('b\''))
             _LOGGER.info("- HW version is: " + self._sensors[5]._state[: -5])
             self._sensors[4]._state = self._sensors[4]._state.strip('b\'')
             self._sensors[5]._state = self._sensors[5]._state[: -5]
-            # update each sensor's info entity
+            # update each data sensor's info entity
             for sensor in self._sensors[:4]:
                 sensor._info = str(response.payload)
             # update sensor manager's info
@@ -225,20 +225,17 @@ class HACoApSensorManager:
 class CoAPsensorNode(Entity):
     """Representation of a CoAP sensor node."""
 
-    def __init__(self, host, uri, protocol, name, unit, round_places, device_id):
+    def __init__(self, sensor_type, uri, name, unit, round_places, device_id):
         """Initialize the sensor."""
 
-        #_LOGGER.info("Adding temp sensor " + name + " with address " + host)
-
+        self._sensor_type = sensor_type
         self._uri = uri
-        self._name = name + "." + uri
+        self._name = name + "." + sensor_type
         self._unit = unit
         self._round_places = round_places
         self._state = 0
-        self._host = host
-        self._protocol = protocol
         self._device_id = device_id
-        self._unique_id = device_id + uri
+        self._unique_id = device_id + sensor_type
         self._info = " "
 
     @property
@@ -277,6 +274,11 @@ class CoAPsensorNode(Entity):
         return f"{self._unique_id}"
 
     @property
+    def uri(self):
+        """Return the COAP uri of the sensor."""
+        return f"{self._uri}"    
+
+    @property
     def device_info(self) -> DeviceInfo:
         """Return the device info."""
         return DeviceInfo(
@@ -292,17 +294,17 @@ class CoAPsensorNode(Entity):
     @property
     def icon(self):
         """Return the icon of the device."""
-        if self._uri == "soil_humidity":
+        if self._sensor_type == "soil_humidity":
             return "mdi:flower"
-        elif self._uri == "air_humidity":
+        elif self._sensor_type == "air_humidity":
             return "mdi:water"
-        elif self._uri == "temperature":
+        elif self._sensor_type == "temperature":
             return "mdi:thermometer"
-        elif self._uri == "battery":
+        elif self._sensor_type == "battery":
             return "mdi:battery"
-        elif self._uri == "info":
-            return "mdi:information"
-        elif self._uri == "info-hw":
-            return "mdi:information-outline" 
+        elif self._sensor_type == "info":
+            return "mdi:github"
+        elif self._sensor_type == "info-hw":
+            return "mdi:information" 
         else:
             return "mdi:cat"

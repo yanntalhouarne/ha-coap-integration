@@ -44,6 +44,8 @@ CONST_COAP_STRING_FALSE = "0"
 
 protocol = ""
 
+CONST_COAP_PUMP_URI = "light"
+
 # for data validation
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     {
@@ -66,7 +68,8 @@ async def async_setup_entry(
     hass_switches.append(
         coap_Switch(
             "["+config[CONF_HOST]+"]",
-            "light", 
+            "water-pump",
+            CONST_COAP_PUMP_URI,
             protocol, 
             config[CONF_NAME], 
             False, 
@@ -79,7 +82,7 @@ async def async_setup_entry(
     async_add_entities(hass_switches)
     _LOGGER.info("-> %s switch entities have been added to device %s", len(hass_switches), config[CONF_NAME])
     for sw in hass_switches:
-        _LOGGER.info("- %s", sw._uri)
+        _LOGGER.info("- %s", sw._switch_type)
 
     async def async_update_switches(event):
         """Update all the coap switches."""
@@ -98,12 +101,13 @@ async def async_setup_entry(
 class coap_Switch(ToggleEntity):
     """Representation of a Digital Output."""
 
-    def __init__(self, host, uri, protocol, name, unit, invert_logic, device_id):
+    def __init__(self, host, switch_type, uri, protocol, name, unit, invert_logic, device_id):
         """Initialize the pin."""
 
         _LOGGER.info("Adding switch " + name + " with address " + host)
 
         self._host = host
+        self._switch_type = switch_type
         self._uri = uri
         self._name = "sw."+name
         self._unit = unit
@@ -111,7 +115,6 @@ class coap_Switch(ToggleEntity):
         self._state = False
         self._protocol = protocol
         self._device_id = device_id
-        #self.async_turn_off()
 
     @property
     def name(self):
@@ -154,7 +157,7 @@ class coap_Switch(ToggleEntity):
     @property
     def icon(self):
         """Return the icon of the device."""
-        return "mdi:light-switch-off"
+        return "mdi:water-pump"
 
     async def async_turn_on(self, **kwargs):
         #_LOGGER.info("HA calling TURN_ON for " + self._host + "/" + self._uri)
@@ -180,7 +183,7 @@ class coap_Switch(ToggleEntity):
         #Message(code=PUT, payload=CONST_COAP_STRING_FALSE.encode("ascii"), uri=CONST_COAP_PROTOCOL + self._host + "/" + self._uri)
         try:
             request = Message(mtype=CON, code=PUT, payload=CONST_COAP_STRING_FALSE.encode("ascii"), uri=CONST_COAP_PROTOCOL + self._host + "/" + self._uri)
-            _LOGGER.info("Sending CON PUT request with payload '0' to " + self._name+"/"+self._uri+"(" + self._host +")")
+            _LOGGER.info("Sending CON PUT request with payload '0' to " + self._name+"/"+self._uri+" (" + self._host +")")
             response = await self._protocol.request(request).response
         except Exception as e:
             _LOGGER.info("-> Exception - Failed to PUT "+self._uri+" resource (token = "+request.token+") with payload 0 to "+self._name+"/"+self._uri)
@@ -191,7 +194,7 @@ class coap_Switch(ToggleEntity):
                 response_bool = True
             self._state = response_bool
             self.async_write_ha_state()
-            _LOGGER.info("-> Switch turned OFF (mid = "+str(request.mid)+"): "+self._name+"/"+self._uri+"(" + self._host +")")
+            _LOGGER.info("-> Switch turned OFF (mid = "+str(request.mid)+"): "+self._name+"/"+self._uri+" (" + self._host +")")
 
     @callback
     async def async_update_values(self):
@@ -199,9 +202,10 @@ class coap_Switch(ToggleEntity):
         try:
             _LOGGER.info("Sending NON GET request to "+self._name+"/"+self._uri+"(" + self._host +")")
             request = Message(mtype=NON, code=GET, uri=CONST_COAP_PROTOCOL + self._host + "/" + self._uri)
+            _LOGGER.info("URI is %: " + CONST_COAP_PROTOCOL + self._host + "/" + self._uri)
             response = await self._protocol.request(request).response
         except Exception as e:
-            _LOGGER.info(" -> Exception - Failed to GET resource (mid = "+str(request.mid)+") from "+self._name+"/"+self._uri+"(" + self._host +")")
+            _LOGGER.info(" -> Exception - Failed to GET resource (mid = "+str(request.mid)+") from "+self._name+"/"+self._uri+" (" + self._host +")")
             _LOGGER.info(e)
         else:
             #_LOGGER.info("Payload received is: %s" % (response.payload))
@@ -213,4 +217,4 @@ class coap_Switch(ToggleEntity):
                 self._state = response_bool
                 #_LOGGER.info("%s changed: %s - %s" % (self._uri, response.code, str(response_bool)))
             self.async_write_ha_state()
-            _LOGGER.info(" -> Received '"+str(response.payload)+"' (mid = "+str(request.mid)+") from "+self._name+"/"+self._uri+"(" + self._host +")")
+            _LOGGER.info(" -> Received '"+str(response.payload)+"' (mid = "+str(request.mid)+") from "+self._name+"/"+self._uri+" (" + self._host +")")
