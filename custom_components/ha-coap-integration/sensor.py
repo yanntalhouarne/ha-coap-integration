@@ -42,7 +42,7 @@ CONST_COAP_PROTOCOL = "coap://"
 CONST_COAP_STRING_TRUE = "1"
 CONST_COAP_STRING_FALSE = "0"
 
-CONST_COAP_DATA_URI = "temperature"
+CONST_COAP_DATA_URI = "data"
 CONST_COAP_INFO_URI = "info"
 
 # protocol = ""

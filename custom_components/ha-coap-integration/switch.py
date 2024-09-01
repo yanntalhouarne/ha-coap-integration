@@ -44,7 +44,7 @@ CONST_COAP_STRING_FALSE = "0"
 
 protocol = ""
 
-CONST_COAP_PUMP_URI = "light"
+CONST_COAP_PUMP_URI = "pump"
 
 # for data validation
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
