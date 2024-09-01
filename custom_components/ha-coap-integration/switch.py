@@ -102,11 +102,11 @@ async def async_setup_entry(
     async def async_update_switches(event):
         """Update all the coap switches."""
         # Update switches based on scan_period set below which comes in from the config
-        for sw in hass_switches:
+        for sw in switches:
             await sw.async_update_values()
 
     # get switch states right awat
-    for sw in hass_switches:
+    for sw in switches:
         await sw.async_update_values()
 
     # also get switch state every CONST_DEFAULT_SCAN_PERIOD_S seconds
@@ -125,8 +125,6 @@ class HACoApSwitchManager:
         self._info = " "
         self._switches = switches
 
-
-
 class CoAPswitchNode(ToggleEntity):
     """Representation of a CoAP switch node."""
 
@@ -141,7 +139,7 @@ class CoAPswitchNode(ToggleEntity):
         self._invert_logic = invert_logic
         self._state = False
         self._protocol = protocol
-        self._device_id = device_id
+        self._device_id = device_id + switch_type
 
     @property
     def name(self):
@@ -187,7 +185,7 @@ class CoAPswitchNode(ToggleEntity):
         if self._switch_type == "pump":
             return "mdi:water-pump"
         elif self._switch_type == "ping":
-            return "mdi:connection"
+            return "mdi:bullhorn"
         else:
             return "mdi:cat"
 
@@ -197,6 +195,7 @@ class CoAPswitchNode(ToggleEntity):
         try:
             request = Message(mtype=CON, code=PUT, payload=CONST_COAP_STRING_TRUE.encode("ascii"), uri=CONST_COAP_PROTOCOL + self._host + "/" + self._uri)
             _LOGGER.info("Sending CON PUT request with payload '1' to " +  self._name+"/"+self._uri+"(" + self._host +")")
+            _LOGGER.info("URI is : " + CONST_COAP_PROTOCOL + self._host + "/" + self._uri)
             response = await self._protocol.request(request).response
         except Exception as e:
             _LOGGER.info(" -> Exception - Failed to PUT "+self._uri+" resource with payload 1 to "+self._name+"/"+self._uri)
@@ -216,6 +215,7 @@ class CoAPswitchNode(ToggleEntity):
         try:
             request = Message(mtype=CON, code=PUT, payload=CONST_COAP_STRING_FALSE.encode("ascii"), uri=CONST_COAP_PROTOCOL + self._host + "/" + self._uri)
             _LOGGER.info("Sending CON PUT request with payload '0' to " + self._name+"/"+self._uri+" (" + self._host +")")
+            _LOGGER.info("URI is : " + CONST_COAP_PROTOCOL + self._host + "/" + self._uri)
             response = await self._protocol.request(request).response
         except Exception as e:
             _LOGGER.info("-> Exception - Failed to PUT "+self._uri+" resource (token = "+request.token+") with payload 0 to "+self._name+"/"+self._uri)
@@ -236,7 +236,7 @@ class CoAPswitchNode(ToggleEntity):
             try:
                 _LOGGER.info("Sending NON GET request to "+self._name+"/"+self._uri+"(" + self._host +")")
                 request = Message(mtype=NON, code=GET, uri=CONST_COAP_PROTOCOL + self._host + "/" + self._uri)
-                #_LOGGER.info("URI is : " + CONST_COAP_PROTOCOL + self._host + "/" + self._uri)
+                _LOGGER.info("URI is : " + CONST_COAP_PROTOCOL + self._host + "/" + self._uri)
                 response = await self._protocol.request(request).response
             except Exception as e:
                 _LOGGER.info(" -> Exception - Failed to GET resource (mid = "+str(request.mid)+") from "+self._name+"/"+self._uri+" (" + self._host +")")
