@@ -8,8 +8,6 @@ import logging
 import asyncio
 import os
 
-# Bring in CoAP
-from aiocoap import *
 
 import voluptuous as vol
 
@@ -26,11 +24,19 @@ from homeassistant.helpers.entity import ToggleEntity
 from homeassistant.helpers.event import async_track_time_interval
 from homeassistant import config_entries, core
 
+# aiocoap
+import aiocoap.defaults
+# Set new values for ACK timeout and max retransmissions
+aiocoap.defaults.ACK_TIMEOUT = 10.0  # Wait 5 seconds for an ACK
+aiocoap.defaults.MAX_RETRANSMIT = 3  # Retransmit up to 5 times
+# Bring in CoAP
+from aiocoap import *
+
 from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
-CONST_DEFAULT_SCAN_PERIOD_S = 600
+CONST_DEFAULT_SCAN_PERIOD_S = 30
 
 CONST_COAP_PROTOCOL = "coap://"
 CONST_COAP_STRING_TRUE = "1"
@@ -53,9 +59,8 @@ async def async_setup_entry(
     config_entry: config_entries.ConfigEntry,
     async_add_entities,
 ):
-    _LOGGER.info("In async_setup_entry()...")
     config = hass.data[DOMAIN].get(config_entry.entry_id)
-    _LOGGER.info("Setting up entry for light entity of %s with unique ID %s", config[CONF_NAME], config[CONF_ID])
+    _LOGGER.info("Setting up entry for switch entity of device %s with unique ID %s", config[CONF_NAME], config[CONF_ID])
     protocol = await Context.create_client_context()
     hass_switches = []
     hass_switches.append(
@@ -72,6 +77,9 @@ async def async_setup_entry(
 
     # Add the entities
     async_add_entities(hass_switches)
+    _LOGGER.info(" -> %s switch entities have been added to device %s", len(hass_switches), config[CONF_NAME])
+    for sw in hass_switches:
+        _LOGGER.info("    - %s", sw._uri)
 
     async def async_update_switches(event):
         """Update all the coap switches."""
@@ -79,7 +87,13 @@ async def async_setup_entry(
         for sw in hass_switches:
             await sw.async_update_values()
 
+    # get switch state
+    for sw in hass_switches:
+        await sw.async_update_values()
+
+    # also get switch state every CONST_DEFAULT_SCAN_PERIOD_S seconds
     async_track_time_interval(hass, async_update_switches, timedelta(seconds=CONST_DEFAULT_SCAN_PERIOD_S))
+    _LOGGER.info(" -> Switch state will be updated every %s seconds", CONST_DEFAULT_SCAN_PERIOD_S)
 
 class coap_Switch(ToggleEntity):
     """Representation of a Digital Output."""
@@ -146,44 +160,50 @@ class coap_Switch(ToggleEntity):
         #_LOGGER.info("HA calling TURN_ON for " + self._host + "/" + self._uri)
         """Turn the device on."""
         try:
-            #_LOGGER.info("HA calling TURN_ON for " + self._host + "/" + self._uri)
+            _LOGGER.info("Sending CON PUT request with payload '1' to " +  self._name+"/"+self._uri+"(" + self._host +")")
             request = Message(mtype=CON, code=PUT, payload=CONST_COAP_STRING_TRUE.encode("ascii"), uri=CONST_COAP_PROTOCOL + self._host + "/" + self._uri)
             response = await self._protocol.request(request).response
+        except Exception as e:
+            _LOGGER.info(" -> Exception - Failed to PUT "+self._uri+" resource with payload 1 to "+self._name+"/"+self._uri)
+            _LOGGER.info(e)
+        else:
             response_bool = False
-            #_LOGGER.info("Payload received is: %s" % (response.payload))
             if (response.payload == b'\x01'):
                 response_bool = True
             self._state = response_bool
             self.async_write_ha_state()
-        except Exception as e:
-            _LOGGER.info("Failed to PUT resource: " + self._name + "/" + self._uri)
-            _LOGGER.info(e)
+            _LOGGER.info(" -> Switch turned ON: "+self._name+"/"+self._uri+"(" + self._host +")")
 
     async def async_turn_off(self, **kwargs):
         #_LOGGER.info("HA calling TURN_OFF for " + self._host + "/" + self._uri)
         """Turn the device off."""
         #Message(code=PUT, payload=CONST_COAP_STRING_FALSE.encode("ascii"), uri=CONST_COAP_PROTOCOL + self._host + "/" + self._uri)
         try:
-            #_LOGGER.info("HA calling TURN_OFF for " + self._host + "/" + self._uri)
+            _LOGGER.info("Sending CON PUT request with payload '0' to " + self._name+"/"+self._uri+"(" + self._host +")")
             request = Message(mtype=CON, code=PUT, payload=CONST_COAP_STRING_FALSE.encode("ascii"), uri=CONST_COAP_PROTOCOL + self._host + "/" + self._uri)
             response = await self._protocol.request(request).response
-            #_LOGGER.info("Payload received is: %s" % (response.payload))
+        except Exception as e:
+            _LOGGER.info(" -> Exception - Failed to PUT "+self._uri+" resource with payload 0 to "+self._name+"/"+self._uri)
+            _LOGGER.info(e)
+        else:    
             response_bool = False
             if (response.payload == b'\x01'):
                 response_bool = True
             self._state = response_bool
             self.async_write_ha_state()
-        except Exception as e:
-            _LOGGER.info("Failed to PUT resource: " + self._name + "/" + + self._uri)
-            _LOGGER.info(e)
+            _LOGGER.info(" -> Switch turned OFF: "+self._name+"/"+self._uri+"(" + self._host +")")
 
     @callback
     async def async_update_values(self):
         """Update this switch."""
         try:
-            #_LOGGER.info("HA calling light GET for " + self._host + "/" + self._uri)
+            _LOGGER.info("Sending NON GET request to "+self._name+"/"+self._uri+"(" + self._host +")")
             request = Message(mtype=NON, code=GET, uri=CONST_COAP_PROTOCOL + self._host + "/" + self._uri)
-            response = await asyncio.wait_for(self._protocol.request(request).response, timeout = 1)
+            response = await self._protocol.request(request).response
+        except Exception as e:
+            _LOGGER.info(" -> Exception - Failed to GET "+self._uri+" resource from "+self._name+"/"+self._uri)
+            _LOGGER.info(e)
+        else:
             #_LOGGER.info("Payload received is: %s" % (response.payload))
             response_bool = False
             if (response.payload == b'\x01'): 
@@ -192,10 +212,5 @@ class coap_Switch(ToggleEntity):
             if (self._state != response_bool):
                 self._state = response_bool
                 #_LOGGER.info("%s changed: %s - %s" % (self._uri, response.code, str(response_bool)))
-                self.async_write_ha_state()
-            _LOGGER.info("ha-coap switch updated.")
-        except asyncio.TimeoutError:
-            _LOGGER.debug("Timeout reached. Giving up.")
-        except Exception as e:
-            _LOGGER.info("Failed to GET resource: " + self._uri)
-            _LOGGER.info(e)
+            self.async_write_ha_state()
+            _LOGGER.info(" -> Received '"+str(response.payload)+"'"+self._name+"/"+self._uri+"(" + self._host +")")
