@@ -186,7 +186,7 @@ class CoAPswitchNode(ToggleEntity):
     @property
     def icon(self):
         """Return the icon of the device."""
-        if self._switch_type == "pump":
+        if self._switch_type == "water-pump":
             return "mdi:water-pump"
         elif self._switch_type == "ping":
             return "mdi:bullhorn"

@@ -110,7 +110,7 @@ class coap_BinarySensor(ToggleEntity):
     """Representation of a Digital Output."""
 
     def __init__(self, host, ping_type, uri, protocol, name, unit, invert_logic, device_id, sound):
-        """Initialize the pin."""
+        """Initialize the ping."""
 
         _LOGGER.info("Adding ping " + name + " with address " + host)
 

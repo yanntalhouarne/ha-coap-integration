@@ -343,17 +343,17 @@ class CoAPsensorNode(Entity):
     @property
     def icon(self):
         """Return the icon of the device."""
-        if self._sensor_type == "soil_humidity":
+        if self._sensor_type == "soil-humidity":
             return "mdi:flower"
-        elif self._sensor_type == "air_humidity":
+        elif self._sensor_type == "air-humidity":
             return "mdi:water"
         elif self._sensor_type == "temperature":
             return "mdi:thermometer"
         elif self._sensor_type == "battery":
             return "mdi:battery"
-        elif self._sensor_type == "info":
+        elif self._sensor_type == "sw-version":
             return "mdi:github"
-        elif self._sensor_type == "info-hw":
+        elif self._sensor_type == "hw-version":
             return "mdi:information" 
         else:
             return "mdi:cat"
