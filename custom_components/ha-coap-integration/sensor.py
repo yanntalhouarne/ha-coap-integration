@@ -1,4 +1,4 @@
-"""HA CoAp Switch Interface."""
+"""HA CoAp Sensor Interface."""
 import sys
 #sys.path.append("/config/custom_components/ha-coap-integration")
 
@@ -35,7 +35,7 @@ from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
-CONST_DEFAULT_SCAN_PERIOD_S = 900 # 15min
+CONST_DATA_SCAN_PERIOD_S = 900 # 15min
 CONST_INFO_SCAN_PERIOD_S = 3600 # 1hr
 
 CONST_COAP_PROTOCOL = "coap://"
@@ -45,6 +45,13 @@ CONST_COAP_STRING_FALSE = "0"
 CONST_COAP_DATA_URI = "data"
 CONST_COAP_INFO_URI = "info"
 
+CONST_COAP_NON_TIMEOUT_S = 10 # In seconds. This is the timeout value for a non-confirmable request.
+
+if CONST_DATA_SCAN_PERIOD_S <= CONST_COAP_NON_TIMEOUT_S:
+    raise Exception("Scan period of resource '%s' cannot be smaller or equal to CONST_COAP_NON_TIMEOUT_S", CONST_COAP_DATA_URI)
+elif CONST_INFO_SCAN_PERIOD_S <= CONST_COAP_NON_TIMEOUT_S:
+    raise Exception("Scan period of resource '%s' cannot be smaller or equal to CONST_COAP_NON_TIMEOUT_S", CONST_COAP_INFO_URI)
+
 # protocol = ""
 
 # for data validation
@@ -53,7 +60,6 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Required(CONF_HOST): cv.string,
         vol.Required(CONF_NAME): cv.string,
         vol.Required(CONF_ID): cv.string,
-        #vol.Required(CONF_MODEL): cv.string,
     }
 )
 
@@ -133,27 +139,17 @@ async def async_setup_entry(
     async_add_entities(sensors)
     for sensor in sensors:
         _LOGGER.info("- %s", sensor._sensor_type)
-    #hass.async_add_job(endpoint.async_get_data)
-    #async_track_time_interval(hass, endpoint.async_get_data, SCAN_INTERVAL)
 
-    # get device data 
-    await sensor_manager.async_get_data()
-    #await asyncio.sleep(3)
-    # get device info
-    await sensor_manager.async_get_info()
+    # get device data (confirmable request)
+    await sensor_manager.async_get_con_data()
+    # get device info (confirmable request)
+    await sensor_manager.async_get_con_info()
     
-    # also get data periodically
-    # async def async_update_sensors(event):
-    #     """Update temperature sensor."""
-    #     # Update sensors based on scan_period set below which comes in from the config
-    #     #for sensor in sensors:
-    #     #    await sensor.async_update_values()
-    #     await sensor_manager.async_get_data()
-    # update sensor data every CONST_DEFAULT_SCAN_PERIOD_S seconds
-    async_track_time_interval(hass, sensor_manager.async_get_data, timedelta(seconds=CONST_DEFAULT_SCAN_PERIOD_S))
-    _LOGGER.info(" -> Data will be updated every %s seconds", CONST_DEFAULT_SCAN_PERIOD_S)
-    # update sensor every CONST_INFO_SCAN_PERIOD_S seconds
-    async_track_time_interval(hass, sensor_manager.async_get_info, timedelta(seconds=CONST_INFO_SCAN_PERIOD_S))
+    # request non-confirmable sensor data every CONST_DATA_SCAN_PERIOD_S seconds
+    async_track_time_interval(hass, sensor_manager.async_get_non_data, timedelta(seconds=CONST_DATA_SCAN_PERIOD_S))
+    _LOGGER.info(" -> Data will be updated every %s seconds", CONST_DATA_SCAN_PERIOD_S)
+    # request non-confirmable sensor every CONST_INFO_SCAN_PERIOD_S seconds
+    async_track_time_interval(hass, sensor_manager.async_get_non_info, timedelta(seconds=CONST_INFO_SCAN_PERIOD_S))
     _LOGGER.info(" -> Info will be updated every %s seconds", CONST_INFO_SCAN_PERIOD_S)
 
 class HACoApSensorManager:
@@ -168,7 +164,7 @@ class HACoApSensorManager:
         self._info = " "
         self._sensors = sensors
 
-    async def async_get_data(self, now=None):
+    async def async_get_non_data(self, now=None):
         """Update the device data."""
         try:
             # make sure all data sensors have the same URI 
@@ -179,9 +175,11 @@ class HACoApSensorManager:
             _uri = CONST_COAP_PROTOCOL+self._host+"/"+CONST_COAP_DATA_URI
             _LOGGER.info("Sending NON GET request to " +  self._name+"/"+CONST_COAP_DATA_URI+"(" + self._host +")")
             request.set_request_uri(uri=_uri)
-            response = await self._protocol.request(request).response
+            # Since this is a non-confirmable request, we need to add a timeout so that we can enter the Exception if we don't get a response from the device.
+            # Wihtout this timeout, if the device doesn't send a response, the platform will hang here, and never throw an exception. 
+            response = await asyncio.wait_for(self._protocol.request(request).response, timeout=CONST_COAP_NON_TIMEOUT_S)
         except Exception as e:
-            _LOGGER.info("-> Exception - Failed to GET '"+CONST_COAP_DATA_URI+"'resource  (mid = "+str(request.mid)+") from "+self._name+"/"+CONST_COAP_DATA_URI)
+            _LOGGER.info("-> Exception - Failed to GET '"+CONST_COAP_DATA_URI+"'resource  (NON, mid = "+str(request.mid)+") from "+self._name+"/"+CONST_COAP_DATA_URI)
             _LOGGER.info(e)
         else:
             _LOGGER.info("-> Received data (mid = "+str(request.mid)+") from "+self._name+"/"+CONST_COAP_DATA_URI+"("+ self._host +")")
@@ -192,19 +190,45 @@ class HACoApSensorManager:
             _LOGGER.info("- Soil humidity = "+str(self._sensors[0]._state)+", Battery = "+str(self._sensors[1]._state)+", Air humidity = "+str(self._sensors[2]._state)+", Temperature = "+str(self._sensors[3]._state))
             for sensor in self._sensors[:4]:
                 sensor.async_write_ha_state()
-            #_LOGGER.info("Device data updated...")
 
-    async def async_get_info(self, now=None):
-        """Update the device info."""
+    async def async_get_con_data(self, now=None):
+        """Update the device data."""
         try:
-            _LOGGER.info("In  async_get_info()...")
+            # make sure all data sensors have the same URI 
+            for sensor in self._sensors[:4]:
+                if sensor.uri != CONST_COAP_DATA_URI:
+                    raise Exception("In device %s, not all data sensors have the same URI.")
             request = Message(mtype=CON, code=GET)
-            _uri = CONST_COAP_PROTOCOL+self._host+"/"+CONST_COAP_INFO_URI
-            _LOGGER.info("Sending CON GET request to " +  self._name+"/"+CONST_COAP_INFO_URI+"(" + self._host +")")
+            _uri = CONST_COAP_PROTOCOL+self._host+"/"+CONST_COAP_DATA_URI
+            _LOGGER.info("Sending CON GET request to " +  self._name+"/"+CONST_COAP_DATA_URI+"(" + self._host +")")
             request.set_request_uri(uri=_uri)
             response = await self._protocol.request(request).response
         except Exception as e:
-            _LOGGER.info("-> Exception - Failed to GET '"+CONST_COAP_INFO_URI+"' resource (mid = "+str(request.mid)+") from "+self._name+"/"+CONST_COAP_INFO_URI)
+            _LOGGER.info("-> Exception - Failed to GET '"+CONST_COAP_DATA_URI+"'resource  (CON, mid = "+str(request.mid)+") from "+self._name+"/"+CONST_COAP_DATA_URI)
+            _LOGGER.info(e)
+        else:
+            _LOGGER.info("-> Received data (mid = "+str(request.mid)+") from "+self._name+"/"+CONST_COAP_DATA_URI+"("+ self._host +")")
+            self._sensors[0]._state = round(float(response.payload[0]), self._sensors[0]._round_places)
+            self._sensors[1]._state = round(float(response.payload[1]), self._sensors[1]._round_places)
+            self._sensors[2]._state = round(float(response.payload[2]), self._sensors[2]._round_places)
+            self._sensors[3]._state = round(float(response.payload[3]), self._sensors[3]._round_places)
+            _LOGGER.info("- Soil humidity = "+str(self._sensors[0]._state)+", Battery = "+str(self._sensors[1]._state)+", Air humidity = "+str(self._sensors[2]._state)+", Temperature = "+str(self._sensors[3]._state))
+            for sensor in self._sensors[:4]:
+                sensor.async_write_ha_state()
+
+    async def async_get_non_info(self, now=None):
+        """Update the device info."""
+        try:
+            #_LOGGER.info("In  async_get_non_info()...")
+            request = Message(mtype=NON, code=GET)
+            _uri = CONST_COAP_PROTOCOL+self._host+"/"+CONST_COAP_INFO_URI
+            _LOGGER.info("Sending CON GET request to " +  self._name+"/"+CONST_COAP_INFO_URI+"(" + self._host +")")
+            request.set_request_uri(uri=_uri)
+            # Since this is a non-confirmable request, we need to add a timeout so that we can enter the Exception if we don't get a response from the device.
+            # Wihtout this timeout, if the device doesn't send a response, the platform will hang here, and never throw an exception. 
+            response = await asyncio.wait_for(self._protocol.request(request).response, timeout=CONST_COAP_NON_TIMEOUT_S)
+        except Exception as e:
+            _LOGGER.info("-> Exception - Failed to GET '"+CONST_COAP_INFO_URI+"' resource (NON, mid = "+str(request.mid)+") from "+self._name+"/"+CONST_COAP_INFO_URI)
             _LOGGER.info(e)
         else:
             #_LOGGER.info("New data received...")
@@ -219,7 +243,32 @@ class HACoApSensorManager:
                 sensor._info = str(response.payload)
             # update sensor manager's info
             self._info = str(response.payload)
-            #_LOGGER.info("Device info fetched...")
+
+    async def async_get_con_info(self, now=None):
+        """Update the device info."""
+        try:
+            #_LOGGER.info("In  async_get_con_info()...")
+            request = Message(mtype=CON, code=GET)
+            _uri = CONST_COAP_PROTOCOL+self._host+"/"+CONST_COAP_INFO_URI
+            _LOGGER.info("Sending CON GET request to " +  self._name+"/"+CONST_COAP_INFO_URI+"(" + self._host +")")
+            request.set_request_uri(uri=_uri)
+            response = await self._protocol.request(request).response
+        except Exception as e:
+            _LOGGER.info("-> Exception - Failed to GET '"+CONST_COAP_INFO_URI+"' resource (CON, mid = "+str(request.mid)+") from "+self._name+"/"+CONST_COAP_INFO_URI)
+            _LOGGER.info(e)
+        else:
+            #_LOGGER.info("New data received...")
+            _LOGGER.info("-> Received data (mid = "+str(request.mid)+") from "+self._name+"/"+CONST_COAP_INFO_URI+" ("+self._host +")")
+            self._sensors[4]._state, self._sensors[5]._state = str(response.payload).rsplit(',', 1)
+            _LOGGER.info("- FW version is: " + self._sensors[4]._state.strip('b\''))
+            _LOGGER.info("- HW version is: " + self._sensors[5]._state[: -5])
+            self._sensors[4]._state = self._sensors[4]._state.strip('b\'')
+            self._sensors[5]._state = self._sensors[5]._state[: -5]
+            # update each data sensor's info entity
+            for sensor in self._sensors[:4]:
+                sensor._info = str(response.payload)
+            # update sensor manager's info
+            self._info = str(response.payload)
 
 
 class CoAPsensorNode(Entity):
@@ -288,7 +337,7 @@ class CoAPsensorNode(Entity):
             },
             name=self.name,
             manufacturer="Yann T.",
-            model=self._info
+            model=self._info,
         )
 
     @property

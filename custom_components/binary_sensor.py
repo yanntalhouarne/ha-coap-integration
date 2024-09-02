@@ -77,7 +77,7 @@ async def async_setup_entry(
     hass_binary_sensors.append(
         coap_BinarySensor(
             "["+config[CONF_HOST]+"]",
-            "ping",
+            "connectivity",
             CONST_COAP_PING_URI,
             protocol, 
             config[CONF_NAME], 
@@ -117,13 +117,14 @@ class coap_BinarySensor(ToggleEntity):
         self._host = host
         self._ping_type = ping_type
         self._uri = uri
-        self._name = "ping."+name
+        self._name = name + "." + ping_type
         self._unit = unit
         self._invert_logic = invert_logic
         self._state = False
         self._protocol = protocol
         self._device_id = device_id
         self._sound = sound
+        self._unique_id = device_id + ping_type
 
     @property
     def name(self):
@@ -148,25 +149,25 @@ class coap_BinarySensor(ToggleEntity):
     @property
     def unique_id(self):
         """Return a unique identifier for this sensor."""
-        return self._device_id
-
-    @property
-    def device_info(self) -> DeviceInfo:
-        """Return the device info."""
-        return DeviceInfo(
-            identifiers={
-                # Serial numbers are unique identifiers within a specific domain
-                (DOMAIN, self._device_id)
-            },
-            name=self.name,
-            manufacturer="Yann T.",
-            #model="version 0.1",
-        )
+        return self._unique_id
 
     @property
     def icon(self):
         """Return the icon of the device."""
         return "mdi:connection"
+
+    # @property
+    # def device_info(self) -> DeviceInfo:
+    #     """Return the device info."""
+    #     return DeviceInfo(
+    #         identifiers={
+    #             # Serial numbers are unique identifiers within a specific domain
+    #             (DOMAIN, self._device_id)
+    #         },
+    #         name=self.name,
+    #         manufacturer="Yann T.",
+    #         #model="version 0.1",
+    #    )
 
     # @property
     # def device_class(self):

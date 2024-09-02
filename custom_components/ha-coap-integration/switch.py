@@ -35,7 +35,7 @@ from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
-CONST_DEFAULT_SCAN_PERIOD_S = 300 # 5min
+CONST_PUMP_SCAN_PERIOD_S = 300 # 5min
 
 CONST_COAP_PROTOCOL = "coap://"
 CONST_COAP_STRING_TRUE = "1"
@@ -45,6 +45,10 @@ protocol = ""
 
 CONST_COAP_PUMP_URI = "pump"
 CONST_COAP_PING_URI = "ping"
+CONST_COAP_NON_TIMEOUT_S = 10 # In seconds. This is the timeout value for a non-confirmable request.
+
+if CONST_PUMP_SCAN_PERIOD_S <= CONST_COAP_NON_TIMEOUT_S:
+    raise Exception("Scan period of resource '%s' cannot be smaller or equal to CONST_COAP_NON_TIMEOUT_S", CONST_COAP_PUMP_URI)
 
 # for data validation
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
@@ -63,7 +67,7 @@ async def async_setup_entry(
     async_add_entities,
 ):
     config = hass.data[DOMAIN].get(config_entry.entry_id)
-    _LOGGER.info("Setting up entry for data entities of device %s with unique ID %s", config[CONF_NAME], config[CONF_ID])
+    _LOGGER.info("Setting up entry for switch entities of device %s with unique ID %s", config[CONF_NAME], config[CONF_ID])
     protocol = await Context.create_client_context()
     switches = []
     switches.append(
@@ -98,20 +102,20 @@ async def async_setup_entry(
     for sw in switches:
         _LOGGER.info("- %s", sw._switch_type)
 
-    # function to update all switches' states
+    # get switch states right away (confirmable request)
+    for sw in switches:
+        await sw.async_update_con_switches()
+
+    # function to update all switches' states (periodic non-confirmable request)
     async def async_update_switches(event):
         """Update all the coap switches."""
         # Update switches based on scan_period set below which comes in from the config
         for sw in switches:
-            await sw.async_update_values()
+            await sw.async_update_non_switches()
 
-    # get switch states right awat
-    for sw in switches:
-        await sw.async_update_values()
-
-    # also get switch state every CONST_DEFAULT_SCAN_PERIOD_S seconds
-    async_track_time_interval(hass, async_update_switches, timedelta(seconds=CONST_DEFAULT_SCAN_PERIOD_S))
-    _LOGGER.info(" -> Switch state will be updated every %s seconds", CONST_DEFAULT_SCAN_PERIOD_S)
+    # start periodic non-confirmable GET requests
+    async_track_time_interval(hass, async_update_switches, timedelta(seconds=CONST_PUMP_SCAN_PERIOD_S))
+    _LOGGER.info(" -> Switch state will be updated every %s seconds", CONST_PUMP_SCAN_PERIOD_S)
 
 class HACoApSwitchManager:
     """Manages Switches of a HA-CoAp Device"""
@@ -139,7 +143,8 @@ class CoAPswitchNode(ToggleEntity):
         self._invert_logic = invert_logic
         self._state = False
         self._protocol = protocol
-        self._device_id = device_id + switch_type
+        self._device_id = device_id
+        self._unique_id = device_id + switch_type
 
     @property
     def name(self):
@@ -164,20 +169,20 @@ class CoAPswitchNode(ToggleEntity):
     @property
     def unique_id(self):
         """Return a unique identifier for this switch."""
-        return self._device_id
+        return self._unique_id
 
-    @property
-    def device_info(self) -> DeviceInfo:
-        """Return the device info."""
-        return DeviceInfo(
-            identifiers={
-                # Serial numbers are unique identifiers within a specific domain
-                (DOMAIN, self._device_id)
-            },
-            name=self.name,
-            manufacturer="Yann T.",
-            #model="version 0.1",
-        )
+    # @property
+    # def device_info(self) -> DeviceInfo:
+    #     """Return the device info."""
+    #     return DeviceInfo(
+    #         identifiers={
+    #             # Serial numbers are unique identifiers within a specific domain
+    #             (DOMAIN, self._device_id)
+    #         },
+    #         name=self.name,
+    #         manufacturer="Yann T.",
+    #         #model="version 0.1",
+    #     )
 
     @property
     def icon(self):
@@ -195,7 +200,7 @@ class CoAPswitchNode(ToggleEntity):
         try:
             request = Message(mtype=CON, code=PUT, payload=CONST_COAP_STRING_TRUE.encode("ascii"), uri=CONST_COAP_PROTOCOL + self._host + "/" + self._uri)
             _LOGGER.info("Sending CON PUT request with payload '1' to " +  self._name+"/"+self._uri+"(" + self._host +")")
-            _LOGGER.info("URI is : " + CONST_COAP_PROTOCOL + self._host + "/" + self._uri)
+            #_LOGGER.info("URI is : " + CONST_COAP_PROTOCOL + self._host + "/" + self._uri)
             response = await self._protocol.request(request).response
         except Exception as e:
             _LOGGER.info(" -> Exception - Failed to PUT "+self._uri+" resource with payload 1 to "+self._name+"/"+self._uri)
@@ -215,10 +220,10 @@ class CoAPswitchNode(ToggleEntity):
         try:
             request = Message(mtype=CON, code=PUT, payload=CONST_COAP_STRING_FALSE.encode("ascii"), uri=CONST_COAP_PROTOCOL + self._host + "/" + self._uri)
             _LOGGER.info("Sending CON PUT request with payload '0' to " + self._name+"/"+self._uri+" (" + self._host +")")
-            _LOGGER.info("URI is : " + CONST_COAP_PROTOCOL + self._host + "/" + self._uri)
+            #_LOGGER.info("URI is : " + CONST_COAP_PROTOCOL + self._host + "/" + self._uri)
             response = await self._protocol.request(request).response
         except Exception as e:
-            _LOGGER.info("-> Exception - Failed to PUT "+self._uri+" resource (token = "+request.token+") with payload 0 to "+self._name+"/"+self._uri)
+            _LOGGER.info("-> Exception - Failed to PUT "+self._uri+" resource (mid = "+str(request.mid)+") with payload 0 to "+self._name+"/"+self._uri)
             _LOGGER.info(e)
         else:    
             response_bool = False
@@ -229,17 +234,19 @@ class CoAPswitchNode(ToggleEntity):
             _LOGGER.info("-> Switch turned OFF (mid = "+str(request.mid)+"): "+self._name+"/"+self._uri+" (" + self._host +")")
 
     @callback
-    async def async_update_values(self):
+    async def async_update_non_switches(self):
         """Update this switch."""
         # only update 'pump' switch
         if (self._uri == CONST_COAP_PUMP_URI):
             try:
                 _LOGGER.info("Sending NON GET request to "+self._name+"/"+self._uri+"(" + self._host +")")
                 request = Message(mtype=NON, code=GET, uri=CONST_COAP_PROTOCOL + self._host + "/" + self._uri)
-                _LOGGER.info("URI is : " + CONST_COAP_PROTOCOL + self._host + "/" + self._uri)
-                response = await self._protocol.request(request).response
+                #_LOGGER.info("URI is : " + CONST_COAP_PROTOCOL + self._host + "/" + self._uri)
+                # Since this is a non-confirmable request, we need to add a timeout so that we can enter the Exception if we don't get a response from the device.
+                # Wihtout this timeout, if the device doesn't send a response, the platform will hang here, and never throw an exception. 
+                response = await asyncio.wait_for(self._protocol.request(request).response, timeout=CONST_COAP_NON_TIMEOUT_S)
             except Exception as e:
-                _LOGGER.info(" -> Exception - Failed to GET resource (mid = "+str(request.mid)+") from "+self._name+"/"+self._uri+" (" + self._host +")")
+                _LOGGER.info(" -> Exception - Failed to GET resource (NON, mid = "+str(request.mid)+") from "+self._name+"/"+self._uri+" (" + self._host +")")
                 _LOGGER.info(e)
             else:
                 #_LOGGER.info("Payload received is: %s" % (response.payload))
@@ -252,3 +259,30 @@ class CoAPswitchNode(ToggleEntity):
                     #_LOGGER.info("%s changed: %s - %s" % (self._uri, response.code, str(response_bool)))
                 self.async_write_ha_state()
                 _LOGGER.info(" -> Received '"+str(response.payload)+"' (mid = "+str(request.mid)+") from "+self._name+"/"+self._uri+" (" + self._host +")")
+
+    @callback
+    async def async_update_con_switches(self):
+        """Update this switch."""
+        # only update 'pump' switch
+        if (self._uri == CONST_COAP_PUMP_URI):
+            try:
+                _LOGGER.info("Sending CON GET request to "+self._name+"/"+self._uri+"(" + self._host +")")
+                request = Message(mtype=CON, code=GET, uri=CONST_COAP_PROTOCOL + self._host + "/" + self._uri)
+                #_LOGGER.info("URI is : " + CONST_COAP_PROTOCOL + self._host + "/" + self._uri)
+                response = await self._protocol.request(request).response
+            except Exception as e:
+                _LOGGER.info(" -> Exception - Failed to GET resource (CON, mid = "+str(request.mid)+") from "+self._name+"/"+self._uri+" (" + self._host +")")
+                _LOGGER.info(e)
+            else:
+                #_LOGGER.info("Payload received is: %s" % (response.payload))
+                response_bool = False
+                if (response.payload == b'\x01'): 
+                    response_bool = True
+                # Check for change
+                if (self._state != response_bool):
+                    self._state = response_bool
+                    #_LOGGER.info("%s changed: %s - %s" % (self._uri, response.code, str(response_bool)))
+                self.async_write_ha_state()
+                _LOGGER.info(" -> Received '"+str(response.payload)+"' (mid = "+str(request.mid)+") from "+self._name+"/"+self._uri+" (" + self._host +")")
+
+    
