@@ -75,7 +75,7 @@ async def async_setup_entry(
     sensors = []
     sensors.append(
         CoAPsensorNode(
-            "soil_humidity",
+            "soil-humidity",
             CONST_COAP_DATA_URI,
             config[CONF_NAME],
             PERCENTAGE,
@@ -95,7 +95,7 @@ async def async_setup_entry(
     )
     sensors.append(
         CoAPsensorNode(
-            "air_humidity",
+            "air-humidity",
             CONST_COAP_DATA_URI,
             config[CONF_NAME],
             PERCENTAGE,
@@ -115,7 +115,7 @@ async def async_setup_entry(
     )
     sensors.append(
         CoAPsensorNode(
-            "info",
+            "sw-version",
             CONST_COAP_INFO_URI,
             config[CONF_NAME],
             None,
@@ -125,7 +125,7 @@ async def async_setup_entry(
     )
     sensors.append(
         CoAPsensorNode(
-            "info-hw",
+            "hw-version",
             CONST_COAP_INFO_URI,
             config[CONF_NAME],
             None,

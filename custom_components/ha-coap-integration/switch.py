@@ -171,18 +171,17 @@ class CoAPswitchNode(ToggleEntity):
         """Return a unique identifier for this switch."""
         return self._unique_id
 
-    # @property
-    # def device_info(self) -> DeviceInfo:
-    #     """Return the device info."""
-    #     return DeviceInfo(
-    #         identifiers={
-    #             # Serial numbers are unique identifiers within a specific domain
-    #             (DOMAIN, self._device_id)
-    #         },
-    #         name=self.name,
-    #         manufacturer="Yann T.",
-    #         #model="version 0.1",
-    #     )
+    @property
+    def device_info(self) -> DeviceInfo:
+        """Return the device info."""
+        return DeviceInfo(
+            identifiers={
+                # Serial numbers are unique identifiers within a specific domain
+                (DOMAIN, self._device_id)
+            },
+            name=self.name,
+            manufacturer="Yann T.",    
+        )
 
     @property
     def icon(self):

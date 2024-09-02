@@ -156,18 +156,17 @@ class coap_BinarySensor(ToggleEntity):
         """Return the icon of the device."""
         return "mdi:connection"
 
-    # @property
-    # def device_info(self) -> DeviceInfo:
-    #     """Return the device info."""
-    #     return DeviceInfo(
-    #         identifiers={
-    #             # Serial numbers are unique identifiers within a specific domain
-    #             (DOMAIN, self._device_id)
-    #         },
-    #         name=self.name,
-    #         manufacturer="Yann T.",
-    #         #model="version 0.1",
-    #    )
+    @property
+    def device_info(self) -> DeviceInfo:
+        """Return the device info."""
+        return DeviceInfo(
+            identifiers={
+                # Serial numbers are unique identifiers within a specific domain
+                (DOMAIN, self._device_id)
+            },
+            name=self.name,
+            manufacturer="Yann T.",    
+        )
 
     # @property
     # def device_class(self):
