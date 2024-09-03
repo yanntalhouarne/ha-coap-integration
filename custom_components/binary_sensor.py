@@ -183,9 +183,9 @@ class coap_BinarySensor(ToggleEntity):
                 command = payload=CONST_COAP_STRING_TRUE.encode("ascii")
             else:
                 command = payload=CONST_COAP_STRING_FALSE.encode("ascii")
-            _LOGGER.info("Sending CON PUT request with payload "+str(command)+" to "+self._name+"/"+self._uri+"(" + self._host +")")
+            _LOGGER.debug("Sending CON PUT request with payload "+str(command)+" to "+self._name+"/"+self._uri+"(" + self._host +")")
             request = Message(mtype=CON, code=PUT, payload=command,  uri=CONST_COAP_PROTOCOL + self._host + "/" + self._uri)
-            #_LOGGER.info("URI is %: " + CONST_COAP_PROTOCOL + self._host + "/" + self._uri)
+            #_LOGGER.debug("URI is %: " + CONST_COAP_PROTOCOL + self._host + "/" + self._uri)
             response = await self._protocol.request(request).response
         except Exception as e:
             _LOGGER.info(" -> Exception - Failed to GET resource (mid = "+str(request.mid)+") from "+self._name+"/"+self._uri+" (" + self._host +")")
@@ -195,7 +195,7 @@ class coap_BinarySensor(ToggleEntity):
             _LOGGER.info(e)
         else:
             response_bool = True
-            _LOGGER.info(" -> Received response (mid = "+str(request.mid)+") from "+self._name+"/"+self._uri+" (" + self._host +")")
+            _LOGGER.debug(" -> Received response (mid = "+str(request.mid)+") from "+self._name+"/"+self._uri+" (" + self._host +")")
         # Check for change
         self._state = response_bool
         self.async_write_ha_state()

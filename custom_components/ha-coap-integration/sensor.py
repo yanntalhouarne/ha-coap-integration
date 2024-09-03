@@ -173,7 +173,7 @@ class HACoApSensorManager:
                     raise Exception("In device %s, not all data sensors have the same URI.")
             request = Message(mtype=NON, code=GET)
             _uri = CONST_COAP_PROTOCOL+self._host+"/"+CONST_COAP_DATA_URI
-            _LOGGER.info("Sending NON GET request to " +  self._name+"/"+CONST_COAP_DATA_URI+"(" + self._host +")")
+            _LOGGER.debug("Sending NON GET request to " +  self._name+"/"+CONST_COAP_DATA_URI+"(" + self._host +")")
             request.set_request_uri(uri=_uri)
             # Since this is a non-confirmable request, we need to add a timeout so that we can enter the Exception if we don't get a response from the device.
             # Wihtout this timeout, if the device doesn't send a response, the platform will hang here, and never throw an exception. 
@@ -182,12 +182,12 @@ class HACoApSensorManager:
             _LOGGER.info("-> Exception - Failed to GET '"+CONST_COAP_DATA_URI+"'resource  (NON, mid = "+str(request.mid)+") from "+self._name+"/"+CONST_COAP_DATA_URI)
             _LOGGER.info(e)
         else:
-            _LOGGER.info("-> Received data (mid = "+str(request.mid)+") from "+self._name+"/"+CONST_COAP_DATA_URI+"("+ self._host +")")
+            _LOGGER.debug("-> Received data (mid = "+str(request.mid)+") from "+self._name+"/"+CONST_COAP_DATA_URI+"("+ self._host +")")
             self._sensors[0]._state = round(float(response.payload[0]), self._sensors[0]._round_places)
             self._sensors[1]._state = round(float(response.payload[1]), self._sensors[1]._round_places)
             self._sensors[2]._state = round(float(response.payload[2]), self._sensors[2]._round_places)
             self._sensors[3]._state = round(float(response.payload[3]), self._sensors[3]._round_places)
-            _LOGGER.info("- Soil humidity = "+str(self._sensors[0]._state)+", Battery = "+str(self._sensors[1]._state)+", Air humidity = "+str(self._sensors[2]._state)+", Temperature = "+str(self._sensors[3]._state))
+            _LOGGER.debug("- Soil humidity = "+str(self._sensors[0]._state)+", Battery = "+str(self._sensors[1]._state)+", Air humidity = "+str(self._sensors[2]._state)+", Temperature = "+str(self._sensors[3]._state))
             for sensor in self._sensors[:4]:
                 sensor.async_write_ha_state()
 
@@ -197,32 +197,33 @@ class HACoApSensorManager:
             # make sure all data sensors have the same URI 
             for sensor in self._sensors[:4]:
                 if sensor.uri != CONST_COAP_DATA_URI:
-                    raise Exception("In device %s, not all data sensors have the same URI.")
+                    _LOGGER.info("In device %s, not all data sensors have the same URI.", sensor.name)
+                    raise Exception("In device %s, not all data sensors have the same URI.", sensor.name)
             request = Message(mtype=CON, code=GET)
             _uri = CONST_COAP_PROTOCOL+self._host+"/"+CONST_COAP_DATA_URI
-            _LOGGER.info("Sending CON GET request to " +  self._name+"/"+CONST_COAP_DATA_URI+"(" + self._host +")")
+            _LOGGER.debug("Sending CON GET request to " +  self._name+"/"+CONST_COAP_DATA_URI+"(" + self._host +")")
             request.set_request_uri(uri=_uri)
             response = await self._protocol.request(request).response
         except Exception as e:
             _LOGGER.info("-> Exception - Failed to GET '"+CONST_COAP_DATA_URI+"'resource  (CON, mid = "+str(request.mid)+") from "+self._name+"/"+CONST_COAP_DATA_URI)
             _LOGGER.info(e)
         else:
-            _LOGGER.info("-> Received data (mid = "+str(request.mid)+") from "+self._name+"/"+CONST_COAP_DATA_URI+"("+ self._host +")")
+            _LOGGER.debug("-> Received data (mid = "+str(request.mid)+") from "+self._name+"/"+CONST_COAP_DATA_URI+"("+ self._host +")")
             self._sensors[0]._state = round(float(response.payload[0]), self._sensors[0]._round_places)
             self._sensors[1]._state = round(float(response.payload[1]), self._sensors[1]._round_places)
             self._sensors[2]._state = round(float(response.payload[2]), self._sensors[2]._round_places)
             self._sensors[3]._state = round(float(response.payload[3]), self._sensors[3]._round_places)
-            _LOGGER.info("- Soil humidity = "+str(self._sensors[0]._state)+", Battery = "+str(self._sensors[1]._state)+", Air humidity = "+str(self._sensors[2]._state)+", Temperature = "+str(self._sensors[3]._state))
+            _LOGGER.debug("- Soil humidity = "+str(self._sensors[0]._state)+", Battery = "+str(self._sensors[1]._state)+", Air humidity = "+str(self._sensors[2]._state)+", Temperature = "+str(self._sensors[3]._state))
             for sensor in self._sensors[:4]:
                 sensor.async_write_ha_state()
 
     async def async_get_non_info(self, now=None):
         """Update the device info."""
         try:
-            #_LOGGER.info("In  async_get_non_info()...")
+            #_LOGGER.debug("In  async_get_non_info()...")
             request = Message(mtype=NON, code=GET)
             _uri = CONST_COAP_PROTOCOL+self._host+"/"+CONST_COAP_INFO_URI
-            _LOGGER.info("Sending CON GET request to " +  self._name+"/"+CONST_COAP_INFO_URI+"(" + self._host +")")
+            _LOGGER.debug("Sending CON GET request to " +  self._name+"/"+CONST_COAP_INFO_URI+"(" + self._host +")")
             request.set_request_uri(uri=_uri)
             # Since this is a non-confirmable request, we need to add a timeout so that we can enter the Exception if we don't get a response from the device.
             # Wihtout this timeout, if the device doesn't send a response, the platform will hang here, and never throw an exception. 
@@ -231,11 +232,10 @@ class HACoApSensorManager:
             _LOGGER.info("-> Exception - Failed to GET '"+CONST_COAP_INFO_URI+"' resource (NON, mid = "+str(request.mid)+") from "+self._name+"/"+CONST_COAP_INFO_URI)
             _LOGGER.info(e)
         else:
-            #_LOGGER.info("New data received...")
-            _LOGGER.info("-> Received data (mid = "+str(request.mid)+") from "+self._name+"/"+CONST_COAP_INFO_URI+" ("+self._host +")")
+            _LOGGER.debug("-> Received data (mid = "+str(request.mid)+") from "+self._name+"/"+CONST_COAP_INFO_URI+" ("+self._host +")")
             self._sensors[4]._state, self._sensors[5]._state = str(response.payload).rsplit(',', 1)
-            _LOGGER.info("- FW version is: " + self._sensors[4]._state.strip('b\''))
-            _LOGGER.info("- HW version is: " + self._sensors[5]._state[: -5])
+            _LOGGER.debug("- FW version is: " + self._sensors[4]._state.strip('b\''))
+            _LOGGER.debug("- HW version is: " + self._sensors[5]._state[: -5])
             self._sensors[4]._state = self._sensors[4]._state.strip('b\'')
             self._sensors[5]._state = self._sensors[5]._state[: -5]
             # update each data sensor's info entity
@@ -247,21 +247,20 @@ class HACoApSensorManager:
     async def async_get_con_info(self, now=None):
         """Update the device info."""
         try:
-            #_LOGGER.info("In  async_get_con_info()...")
+            #_LOGGER.debug("In  async_get_con_info()...")
             request = Message(mtype=CON, code=GET)
             _uri = CONST_COAP_PROTOCOL+self._host+"/"+CONST_COAP_INFO_URI
-            _LOGGER.info("Sending CON GET request to " +  self._name+"/"+CONST_COAP_INFO_URI+"(" + self._host +")")
+            _LOGGER.debug("Sending CON GET request to " +  self._name+"/"+CONST_COAP_INFO_URI+"(" + self._host +")")
             request.set_request_uri(uri=_uri)
             response = await self._protocol.request(request).response
         except Exception as e:
             _LOGGER.info("-> Exception - Failed to GET '"+CONST_COAP_INFO_URI+"' resource (CON, mid = "+str(request.mid)+") from "+self._name+"/"+CONST_COAP_INFO_URI)
             _LOGGER.info(e)
         else:
-            #_LOGGER.info("New data received...")
-            _LOGGER.info("-> Received data (mid = "+str(request.mid)+") from "+self._name+"/"+CONST_COAP_INFO_URI+" ("+self._host +")")
+            _LOGGER.debug("-> Received data (mid = "+str(request.mid)+") from "+self._name+"/"+CONST_COAP_INFO_URI+" ("+self._host +")")
             self._sensors[4]._state, self._sensors[5]._state = str(response.payload).rsplit(',', 1)
-            _LOGGER.info("- FW version is: " + self._sensors[4]._state.strip('b\''))
-            _LOGGER.info("- HW version is: " + self._sensors[5]._state[: -5])
+            _LOGGER.debug("- FW version is: " + self._sensors[4]._state.strip('b\''))
+            _LOGGER.debug("- HW version is: " + self._sensors[5]._state[: -5])
             self._sensors[4]._state = self._sensors[4]._state.strip('b\'')
             self._sensors[5]._state = self._sensors[5]._state[: -5]
             # update each data sensor's info entity
