@@ -1,14 +1,7 @@
 """HA CoAp Switch Interface."""
-import sys
-#sys.path.append("/config/custom_components/ha-coap-integration")
-
-from datetime import timedelta
 import logging
 import asyncio
 import os
-
-
-import voluptuous as vol
 
 from homeassistant.components.switch import PLATFORM_SCHEMA
 from homeassistant.const import (
@@ -23,65 +16,34 @@ from homeassistant.helpers.entity import ToggleEntity
 from homeassistant.helpers.event import async_track_time_interval
 from homeassistant import config_entries, core
 
-# aiocoap
 import aiocoap.defaults
-# Set new values for ACK timeout and max retransmissions
-aiocoap.defaults.ACK_TIMEOUT = 10.0  # Wait 5 seconds for an ACK
-aiocoap.defaults.MAX_RETRANSMIT = 3  # Retransmit up to 5 times
-# Bring in CoAP
-from aiocoap import *
+aiocoap.defaults.ACK_TIMEOUT = 10.0
+aiocoap.defaults.MAX_RETRANSMIT = 3
+from aiocoap import Message, Context
+from aiocoap.numbers.codes import Code
+from aiocoap.numbers.types import Type
 
 from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
-CONST_PUMP_SCAN_PERIOD_S = 300 # 5min
-
 CONST_COAP_PROTOCOL = "coap://"
 CONST_COAP_STRING_TRUE = "1"
 CONST_COAP_STRING_FALSE = "0"
 
-protocol = ""
-
-CONST_COAP_PUMP_URI = "pump"
 CONST_COAP_PING_URI = "ping"
-CONST_COAP_NON_TIMEOUT_S = 10 # In seconds. This is the timeout value for a non-confirmable request.
+CONST_COAP_NON_TIMEOUT_S = 10
 
-if CONST_PUMP_SCAN_PERIOD_S <= CONST_COAP_NON_TIMEOUT_S:
-    raise Exception("Scan period of resource '%s' cannot be smaller or equal to CONST_COAP_NON_TIMEOUT_S", CONST_COAP_PUMP_URI)
-
-# for data validation
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
-    {
-        vol.Required(CONF_HOST): cv.string,
-        vol.Required(CONF_NAME): cv.string,
-        vol.Required(CONF_ID): cv.string,
-    }
-)
-
-
-# setup platform when new device is discovered by zeroconf
 async def async_setup_entry(
     hass: core.HomeAssistant,
     config_entry: config_entries.ConfigEntry,
     async_add_entities,
 ):
+    """Set up switches from config entry."""
     config = hass.data[DOMAIN].get(config_entry.entry_id)
-    _LOGGER.info("Setting up entry for switch entities of device %s with unique ID %s", config[CONF_NAME], config[CONF_ID])
+    _LOGGER.info("Setting up switch entities of device %s with unique ID %s", config[CONF_NAME], config[CONF_ID])
     protocol = await Context.create_client_context()
     switches = []
-    switches.append(
-        CoAPswitchNode(
-            "["+config[CONF_HOST]+"]",
-            "water-pump",
-            CONST_COAP_PUMP_URI,
-            protocol, 
-            config[CONF_NAME], 
-            False, 
-            None,
-            config[CONF_ID],
-        )
-    )
     switches.append(
         CoAPswitchNode(
             "["+config[CONF_HOST]+"]",
@@ -95,46 +57,20 @@ async def async_setup_entry(
         )
     )
 
-    # add switches to switch manager
-    switch_manager = HACoApSwitchManager(protocol, "["+config[CONF_HOST]+"]", config[CONF_NAME], switches)
     _LOGGER.info("-> %s switch entities have been added to device %s", len(switches), config[CONF_NAME])
     async_add_entities(switches)
     for sw in switches:
         _LOGGER.info("- %s", sw._switch_type)
 
-    # get switch states right away (confirmable request)
+    # get switch states right away
     for sw in switches:
         await sw.async_update_con_switches()
-
-    # function to update all switches' states (periodic non-confirmable request)
-    async def async_update_switches(event):
-        """Update all the coap switches."""
-        # Update switches based on scan_period set below which comes in from the config
-        for sw in switches:
-            await sw.async_update_non_switches()
-
-    # start periodic non-confirmable GET requests
-    async_track_time_interval(hass, async_update_switches, timedelta(seconds=CONST_PUMP_SCAN_PERIOD_S))
-    _LOGGER.info(" -> Switch state will be updated every %s seconds", CONST_PUMP_SCAN_PERIOD_S)
-
-class HACoApSwitchManager:
-    """Manages Switches of a HA-CoAp Device"""
-
-    def __init__(self, protocol, host, name, switches):
-        """Initialize the switch manager."""
-        #self._hass = hass
-        self._protocol = protocol
-        self._host = host
-        self._name = name
-        self._info = " "
-        self._switches = switches
 
 class CoAPswitchNode(ToggleEntity):
     """Representation of a CoAP switch node."""
 
     def __init__(self, host, switch_type, uri, protocol, name, unit, invert_logic, device_id):
         """Initialize the switch."""
-
         self._host = host
         self._switch_type = switch_type
         self._uri = uri
@@ -162,11 +98,6 @@ class CoAPswitchNode(ToggleEntity):
         return self._state
     
     @property
-    def device_id(self):
-        """Return the ID of this roller."""
-        return self.self._device_id
-
-    @property
     def unique_id(self):
         """Return a unique identifier for this switch."""
         return self._unique_id
@@ -175,10 +106,7 @@ class CoAPswitchNode(ToggleEntity):
     def device_info(self) -> DeviceInfo:
         """Return the device info."""
         return DeviceInfo(
-            identifiers={
-                # Serial numbers are unique identifiers within a specific domain
-                (DOMAIN, self._device_id)
-            },
+            identifiers={(DOMAIN, self._device_id)},
             name=self.name,
             manufacturer="Yann T.",    
         )
@@ -186,102 +114,61 @@ class CoAPswitchNode(ToggleEntity):
     @property
     def icon(self):
         """Return the icon of the device."""
-        if self._switch_type == "pump":
-            return "mdi:water-pump"
-        elif self._switch_type == "ping":
-            return "mdi:bullhorn"
-        else:
-            return "mdi:cat"
+        return "mdi:bullhorn"
 
     async def async_turn_on(self, **kwargs):
-        #_LOGGER.debug("HA calling TURN_ON for " + self._host + "/" + self._uri)
         """Turn the device on."""
         try:
-            request = Message(mtype=CON, code=PUT, payload=CONST_COAP_STRING_TRUE.encode("ascii"), uri=CONST_COAP_PROTOCOL + self._host + "/" + self._uri)
-            _LOGGER.debug("Sending CON PUT request with payload '1' to " +  self._name+"/"+self._uri+"(" + self._host +")")
-            #_LOGGER.debug("URI is : " + CONST_COAP_PROTOCOL + self._host + "/" + self._uri)
+            request = Message(
+                mtype=Type.CON,
+                code=Code.PUT,
+                payload=CONST_COAP_STRING_TRUE.encode("ascii"),
+                uri=f"{CONST_COAP_PROTOCOL}{self._host}/{self._uri}"
+            )
+            _LOGGER.debug(f"Sending CON PUT request with payload '1' to {self._name}/{self._uri}({self._host})")
             response = await self._protocol.request(request).response
+            if response:
+                response_bool = response.payload == b'\x01'
+                self._state = response_bool
+                self.async_write_ha_state()
+                _LOGGER.debug(f"-> Switch turned ON: {self._name}/{self._uri}({self._host})")
         except Exception as e:
-            _LOGGER.info(" -> Exception - Failed to PUT "+self._uri+" resource with payload 1 to "+self._name+"/"+self._uri)
-            _LOGGER.info(e)
-        else:
-            response_bool = False
-            if (response.payload == b'\x01'):
-                response_bool = True
-            self._state = response_bool
-            self.async_write_ha_state()
-            _LOGGER.debug("-> Switch turned ON: "+self._name+"/"+self._uri+"(" + self._host +")")
+            _LOGGER.error(f"Failed to turn on {self._name}: {str(e)}")
 
     async def async_turn_off(self, **kwargs):
-        #_LOGGER.debug("HA calling TURN_OFF for " + self._host + "/" + self._uri)
         """Turn the device off."""
-        #Message(code=PUT, payload=CONST_COAP_STRING_FALSE.encode("ascii"), uri=CONST_COAP_PROTOCOL + self._host + "/" + self._uri)
         try:
-            request = Message(mtype=CON, code=PUT, payload=CONST_COAP_STRING_FALSE.encode("ascii"), uri=CONST_COAP_PROTOCOL + self._host + "/" + self._uri)
-            _LOGGER.debug("Sending CON PUT request with payload '0' to " + self._name+"/"+self._uri+" (" + self._host +")")
-            #_LOGGER.debug("URI is : " + CONST_COAP_PROTOCOL + self._host + "/" + self._uri)
+            request = Message(
+                mtype=Type.CON,
+                code=Code.PUT,
+                payload=CONST_COAP_STRING_FALSE.encode("ascii"),
+                uri=f"{CONST_COAP_PROTOCOL}{self._host}/{self._uri}"
+            )
+            _LOGGER.debug(f"Sending CON PUT request with payload '0' to {self._name}/{self._uri}({self._host})")
             response = await self._protocol.request(request).response
+            if response:
+                response_bool = response.payload == b'\x01'
+                self._state = response_bool
+                self.async_write_ha_state()
+                _LOGGER.debug(f"-> Switch turned OFF: {self._name}/{self._uri}({self._host})")
         except Exception as e:
-            _LOGGER.info("-> Exception - Failed to PUT "+self._uri+" resource (mid = "+str(request.mid)+") with payload 0 to "+self._name+"/"+self._uri)
-            _LOGGER.info(e)
-        else:    
-            response_bool = False
-            if (response.payload == b'\x01'):
-                response_bool = True
-            self._state = response_bool
-            self.async_write_ha_state()
-            _LOGGER.debug("-> Switch turned OFF (mid = "+str(request.mid)+"): "+self._name+"/"+self._uri+" (" + self._host +")")
+            _LOGGER.error(f"Failed to turn off {self._name}: {str(e)}")
 
-    @callback
-    async def async_update_non_switches(self):
-        """Update this switch."""
-        # only update 'pump' switch
-        if (self._uri == CONST_COAP_PUMP_URI):
-            try:
-                _LOGGER.debug("Sending NON GET request to "+self._name+"/"+self._uri+"(" + self._host +")")
-                request = Message(mtype=NON, code=GET, uri=CONST_COAP_PROTOCOL + self._host + "/" + self._uri)
-                #_LOGGER.debug("URI is : " + CONST_COAP_PROTOCOL + self._host + "/" + self._uri)
-                # Since this is a non-confirmable request, we need to add a timeout so that we can enter the Exception if we don't get a response from the device.
-                # Wihtout this timeout, if the device doesn't send a response, the platform will hang here, and never throw an exception. 
-                response = await asyncio.wait_for(self._protocol.request(request).response, timeout=CONST_COAP_NON_TIMEOUT_S)
-            except Exception as e:
-                _LOGGER.info(" -> Exception - Failed to GET resource (NON, mid = "+str(request.mid)+") from "+self._name+"/"+self._uri+" (" + self._host +")")
-                _LOGGER.info(e)
-            else:
-                #_LOGGER.debug("Payload received is: %s" % (response.payload))
-                response_bool = False
-                if (response.payload == b'\x01'): 
-                    response_bool = True
-                # Check for change
-                if (self._state != response_bool):
-                    self._state = response_bool
-                    #_LOGGER.debug("%s changed: %s - %s" % (self._uri, response.code, str(response_bool)))
-                self.async_write_ha_state()
-                _LOGGER.debug(" -> Received '"+str(response.payload)+"' (mid = "+str(request.mid)+") from "+self._name+"/"+self._uri+" (" + self._host +")")
-
-    @callback
     async def async_update_con_switches(self):
-        """Update this switch."""
-        # only update 'pump' switch
-        if (self._uri == CONST_COAP_PUMP_URI):
-            try:
-                _LOGGER.debug("Sending CON GET request to "+self._name+"/"+self._uri+"(" + self._host +")")
-                request = Message(mtype=CON, code=GET, uri=CONST_COAP_PROTOCOL + self._host + "/" + self._uri)
-                #_LOGGER.info("URI is : " + CONST_COAP_PROTOCOL + self._host + "/" + self._uri)
-                response = await self._protocol.request(request).response
-            except Exception as e:
-                _LOGGER.info(" -> Exception - Failed to GET resource (CON, mid = "+str(request.mid)+") from "+self._name+"/"+self._uri+" (" + self._host +")")
-                _LOGGER.info(e)
-            else:
-                #_LOGGER.debug("Payload received is: %s" % (response.payload))
-                response_bool = False
-                if (response.payload == b'\x01'): 
-                    response_bool = True
-                # Check for change
-                if (self._state != response_bool):
+        """Update switch state using confirmable request."""
+        try:
+            _LOGGER.debug(f"Sending CON GET request to {self._name}/{self._uri}({self._host})")
+            request = Message(
+                mtype=Type.CON,
+                code=Code.GET,
+                uri=f"{CONST_COAP_PROTOCOL}{self._host}/{self._uri}"
+            )
+            response = await self._protocol.request(request).response
+            if response:
+                response_bool = response.payload == b'\x01'
+                if self._state != response_bool:
                     self._state = response_bool
-                    #_LOGGER.debug("%s changed: %s - %s" % (self._uri, response.code, str(response_bool)))
                 self.async_write_ha_state()
-                _LOGGER.debug(" -> Received '"+str(response.payload)+"' (mid = "+str(request.mid)+") from "+self._name+"/"+self._uri+" (" + self._host +")")
-
-    
+                _LOGGER.debug(f"-> Received '{response.payload}' from {self._name}/{self._uri}({self._host})")
+        except Exception as e:
+            _LOGGER.error(f"Failed to update {self._name}: {str(e)}")   
