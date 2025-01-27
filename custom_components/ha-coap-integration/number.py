@@ -39,6 +39,9 @@ async def async_setup_entry(
         config[CONF_ID],
     )
     
+    # Get initial value before adding entity
+    await number.async_get_initial_value()
+    
     async_add_entities([number])
     _LOGGER.info("-> Added pump duty cycle control for device %s", config[CONF_NAME])
 
@@ -56,8 +59,47 @@ class CoAPPumpDutyCycle(NumberEntity):
         self._attr_native_max_value = 9
         self._attr_native_step = 1
         self._attr_mode = NumberMode.SLIDER
-        self._attr_native_value = 1  # Default value set to 1
+        self._attr_native_value = 1  # Default value
         self._attr_icon = "mdi:pump"
+
+    async def async_get_initial_value(self) -> None:
+        """Get the initial pump duty cycle value from the server."""
+        try:
+            request = Message(
+                mtype=Type.CON,
+                code=Code.GET,
+                uri=f"{CONST_COAP_PROTOCOL}{self._host}/{CONST_COAP_PUMPDC_URI}"
+            )
+            _LOGGER.debug(
+                "Sending CON GET request to get initial pump duty cycle from %s/%s (%s)",
+                self.name,
+                CONST_COAP_PUMPDC_URI,
+                self._host
+            )
+            response = await self._protocol.request(request).response
+            if response and response.payload:
+                # Handle single byte response
+                value = int.from_bytes(response.payload, byteorder='big')
+                if 1 <= value <= 9:  # Validate the value is in range
+                    self._attr_native_value = value
+                    _LOGGER.debug(
+                        "Successfully got initial pump duty cycle value: %d for %s",
+                        value,
+                        self.name
+                    )
+                else:
+                    _LOGGER.warning(
+                        "Received pump duty cycle value %d is out of range (1-9) for %s",
+                        value,
+                        self.name
+                    )
+            
+        except Exception as e:
+            _LOGGER.error(
+                "Failed to get initial pump duty cycle value for %s: %s",
+                self.name,
+                str(e)
+            )
 
     @property
     def device_info(self) -> DeviceInfo:
@@ -72,10 +114,12 @@ class CoAPPumpDutyCycle(NumberEntity):
         """Update the current value."""
         try:
             int_value = int(value)
+            # Convert integer to single byte
+            payload = int_value.to_bytes(1, byteorder='big')
             request = Message(
                 mtype=Type.CON,
                 code=Code.PUT,
-                payload=str(int_value).encode("ascii"),
+                payload=payload,
                 uri=f"{CONST_COAP_PROTOCOL}{self._host}/{CONST_COAP_PUMPDC_URI}"
             )
             _LOGGER.debug(
