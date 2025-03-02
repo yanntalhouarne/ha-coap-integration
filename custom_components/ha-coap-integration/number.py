@@ -113,7 +113,7 @@ class CoAPPumpDutyCycle(NumberEntity):
     async def async_set_native_value(self, value: float) -> None:
         """Update the current value."""
         try:
-            int_value = int(value)
+            int_value = int(value+48)
             # Convert integer to single byte
             payload = int_value.to_bytes(1, byteorder='big')
             request = Message(
@@ -131,7 +131,7 @@ class CoAPPumpDutyCycle(NumberEntity):
             )
             response = await self._protocol.request(request).response
             if response:
-                self._attr_native_value = int_value
+                self._attr_native_value = int_value-48
                 _LOGGER.debug(
                     "Successfully set pump duty cycle to %d for %s",
                     int_value,
