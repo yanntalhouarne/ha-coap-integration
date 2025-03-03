@@ -13,6 +13,7 @@ _LOGGER = logging.getLogger(__name__)
 
 CONST_COAP_PROTOCOL = "coap://"
 CONST_COAP_PUMP_URI = "pump"
+CONST_COAP_PING_URI = "ping"
 
 async def async_setup_entry(
     hass: core.HomeAssistant,
@@ -29,15 +30,22 @@ async def async_setup_entry(
     
     protocol = await Context.create_client_context()
     
-    button = CoAPPumpButton(
+    pump_button = CoAPPumpButton(
         protocol,
         "[" + config[CONF_HOST] + "]",
         config[CONF_NAME],
         config[CONF_ID],
     )
     
-    async_add_entities([button])
-    _LOGGER.info("-> Added pump button for device %s", config[CONF_NAME])
+    ping_button = CoAPPingButton(
+        protocol,
+        "[" + config[CONF_HOST] + "]",
+        config[CONF_NAME],
+        config[CONF_ID],
+    )
+    
+    async_add_entities([pump_button, ping_button])
+    _LOGGER.info("-> Added pump and ping buttons for device %s", config[CONF_NAME])
 
 class CoAPPumpButton(ButtonEntity):
     """Representation of a CoAP pump button."""
@@ -85,6 +93,56 @@ class CoAPPumpButton(ButtonEntity):
         except Exception as e:
             _LOGGER.error(
                 "Failed to activate pump for %s: %s",
+                self.name,
+                str(e)
+            )
+
+class CoAPPingButton(ButtonEntity):
+    """Representation of a CoAP ping button."""
+
+    def __init__(self, protocol, host, name, device_id):
+        """Initialize the button entity."""
+        self._protocol = protocol
+        self._host = host
+        self._attr_name = f"{name}.ping"
+        self._attr_unique_id = f"{device_id}_ping"
+        self._device_id = device_id
+        self._attr_icon = "mdi:access-point-network"
+
+    @property
+    def device_info(self) -> DeviceInfo:
+        """Return the device info."""
+        return DeviceInfo(
+            identifiers={(DOMAIN, self._device_id)},
+            name=self.name,
+            manufacturer="Yann T.",
+        )
+
+    async def async_press(self) -> None:
+        """Handle the button press."""
+        try:
+            request = Message(
+                mtype=Type.CON,
+                code=Code.PUT,
+                payload=b"1",  # Send ascii "1" to ping the device activate the buzzer
+                uri=f"{CONST_COAP_PROTOCOL}{self._host}/{CONST_COAP_PING_URI}"
+            )
+            _LOGGER.debug(
+                "Sending CON PUT request to %s/%s (%s)",
+                self.name,
+                CONST_COAP_PING_URI,
+                self._host
+            )
+            response = await self._protocol.request(request).response
+            if response:
+                _LOGGER.debug(
+                    "Successfully pinged %s",
+                    self.name
+                )
+            
+        except Exception as e:
+            _LOGGER.error(
+                "Failed ping %s: %s",
                 self.name,
                 str(e)
             )

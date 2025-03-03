@@ -223,7 +223,7 @@ class HACoApSensorManager:
             #_LOGGER.debug("In  async_get_non_info()...")
             request = Message(mtype=NON, code=GET)
             _uri = CONST_COAP_PROTOCOL+self._host+"/"+CONST_COAP_INFO_URI
-            _LOGGER.debug("Sending CON GET request to " +  self._name+"/"+CONST_COAP_INFO_URI+"(" + self._host +")")
+            _LOGGER.debug("Sending NON GET request to " +  self._name+"/"+CONST_COAP_INFO_URI+"(" + self._host +")")
             request.set_request_uri(uri=_uri)
             # Since this is a non-confirmable request, we need to add a timeout so that we can enter the Exception if we don't get a response from the device.
             # Wihtout this timeout, if the device doesn't send a response, the platform will hang here, and never throw an exception. 

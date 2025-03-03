@@ -131,13 +131,22 @@ class CoAPPumpDutyCycle(NumberEntity):
             )
             response = await self._protocol.request(request).response
             if response:
-                self._attr_native_value = int_value-48
-                _LOGGER.debug(
-                    "Successfully set pump duty cycle to %d for %s",
-                    int_value,
-                    self.name
-                )
-            
+                if response and response.payload:
+                    # Handle single byte response
+                    value = int.from_bytes(response.payload, byteorder='big')
+                    if 1 <= value <= 9:  # Validate the value is in range
+                        self._attr_native_value = value
+                        _LOGGER.debug(
+                            "Successfully set pump duty cycle value: %d for %s",
+                            value,
+                            self.name
+                        )
+                    else:
+                        _LOGGER.warning(
+                            "Requested pump duty cycle value %d is out of range (1-9) for %s",
+                            value,
+                            self.name
+                        )
         except Exception as e:
             _LOGGER.error(
                 "Failed to set pump duty cycle for %s: %s",
