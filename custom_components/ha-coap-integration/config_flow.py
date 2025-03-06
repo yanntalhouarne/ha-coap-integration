@@ -109,7 +109,7 @@ class myCoapConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             else:
                 _LOGGER.info("No '-' character found in host name: %s", self.name)
             self.unique_id = result_string
-            _LOGGER.info("Zeroconf discovered hostname: %s, with IPv6 address: %s and unique ID: %s", self.name, self.ipaddr, self.unique_id)
+            _LOGGER.debug("Zeroconf discovered hostname: %s, with IPv6 address: %s and unique ID: %s", self.name, self.ipaddr, self.unique_id)
 
             # check if ID is already registered
             isUnique = await self.async_set_unique_id(self.unique_id)
