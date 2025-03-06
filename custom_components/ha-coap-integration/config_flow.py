@@ -116,7 +116,7 @@ class myCoapConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             if isUnique == None:
                 _LOGGER.info("New device ID discovered: %s", self.unique_id)
             else:
-                _LOGGER.info("Device ID already registered: %s", self.unique_id)
+                _LOGGER.debug("Device ID already registered: %s", self.unique_id)
             # get FW version
             # try:
             #     _uri = CONST_COAP_PROTOCOL + "[" + self.ipaddr + "]" + "/" + "info"
