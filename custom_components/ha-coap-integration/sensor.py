@@ -133,6 +133,16 @@ async def async_setup_entry(
             config[CONF_ID],
         )
     )
+    sensors.append(
+        CoAPsensorNode(
+            "device-id",
+            CONST_COAP_INFO_URI,
+            config[CONF_NAME],
+            None,
+            1,
+            config[CONF_ID],
+        )
+    )
     # add sensors to sensor manager
     sensor_manager = HACoApSensorManager(protocol, "["+config[CONF_HOST]+"]", config[CONF_NAME], sensors)
     _LOGGER.info("-> %s data entities have been added to device %s", len(sensors), config[CONF_NAME])
@@ -233,13 +243,18 @@ class HACoApSensorManager:
             _LOGGER.info(e)
         else:
             _LOGGER.debug("-> Received data (mid = "+str(request.mid)+") from "+self._name+"/"+CONST_COAP_INFO_URI+" ("+self._host +")")
-            self._sensors[4]._state, self._sensors[5]._state = str(response.payload).rsplit(',', 1)
+            parts = str(response.payload).rsplit(',', 2)
+            self._sensors[4]._state = parts[0]
+            self._sensors[5]._state = parts[1] if len(parts) > 1 else ""
+            self._sensors[6]._state = parts[2] if len(parts) > 2 else ""
             _LOGGER.debug("- FW version is: " + self._sensors[4]._state.strip('b\''))
             _LOGGER.debug("- HW version is: " + self._sensors[5]._state[: -5])
+            _LOGGER.debug("- Devie ID is: " + self._sensors[6]._state[: -4])
             self._sensors[4]._state = self._sensors[4]._state.strip('b\'')
-            self._sensors[5]._state = self._sensors[5]._state[: -5]
+            #self._sensors[5]._state = self._sensors[5]._state[: -5]
+            self._sensors[6]._state = self._sensors[6]._state[: -5]
             # update each data sensor's info entity
-            for sensor in self._sensors[:4]:
+            for sensor in self._sensors[:5]:
                 sensor._info = str(response.payload)
             # update sensor manager's info
             self._info = str(response.payload)
@@ -257,18 +272,22 @@ class HACoApSensorManager:
             _LOGGER.info("-> Exception - Failed to GET '"+CONST_COAP_INFO_URI+"' resource (CON, mid = "+str(request.mid)+") from "+self._name+"/"+CONST_COAP_INFO_URI)
             _LOGGER.info(e)
         else:
-            _LOGGER.debug("-> Received data (mid = "+str(request.mid)+") from "+self._name+"/"+CONST_COAP_INFO_URI+" ("+self._host +")")
-            self._sensors[4]._state, self._sensors[5]._state = str(response.payload).rsplit(',', 1)
+            _LOGGER.debug("-> Received data (mid = "+str(request.mid)+") from "+self._name+"/"+CONST_COAP_INFO_URI+" ("+self._host +"): "+str(response.payload))
+            parts = str(response.payload).rsplit(',', 2)
+            self._sensors[4]._state = parts[0]
+            self._sensors[5]._state = parts[1] if len(parts) > 1 else ""
+            self._sensors[6]._state = parts[2] if len(parts) > 2 else ""
             _LOGGER.debug("- FW version is: " + self._sensors[4]._state.strip('b\''))
             _LOGGER.debug("- HW version is: " + self._sensors[5]._state[: -5])
+            _LOGGER.debug("- Device ID is: " + self._sensors[6]._state[: -4])
             self._sensors[4]._state = self._sensors[4]._state.strip('b\'')
-            self._sensors[5]._state = self._sensors[5]._state[: -5]
+            #self._sensors[5]._state = self._sensors[5]._state[: -5]
+            self._sensors[6]._state = self._sensors[6]._state[: -5]
             # update each data sensor's info entity
             for sensor in self._sensors[:4]:
                 sensor._info = str(response.payload)
             # update sensor manager's info
             self._info = str(response.payload)
-
 
 class CoAPsensorNode(Entity):
     """Representation of a CoAP sensor node."""
