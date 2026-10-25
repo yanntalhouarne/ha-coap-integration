@@ -47,6 +47,10 @@ CONST_COAP_INFO_URI = "info"
 
 CONST_COAP_NON_TIMEOUT_S = 10 # In seconds. This is the timeout value for a non-confirmable request.
 
+def decode_temperature(value):
+    """The device sends the temperature as a signed byte (int8, degC): 251 is -5."""
+    return value - 256 if value > 127 else value
+
 if CONST_DATA_SCAN_PERIOD_S <= CONST_COAP_NON_TIMEOUT_S:
     raise Exception("Scan period of resource '%s' cannot be smaller or equal to CONST_COAP_NON_TIMEOUT_S", CONST_COAP_DATA_URI)
 elif CONST_INFO_SCAN_PERIOD_S <= CONST_COAP_NON_TIMEOUT_S:
@@ -196,7 +200,7 @@ class HACoApSensorManager:
             self._sensors[0]._state = round(float(response.payload[0]), self._sensors[0]._round_places)
             self._sensors[1]._state = round(float(response.payload[1]), self._sensors[1]._round_places)
             self._sensors[2]._state = round(float(response.payload[2]), self._sensors[2]._round_places)
-            self._sensors[3]._state = round(float(response.payload[3]), self._sensors[3]._round_places)
+            self._sensors[3]._state = round(float(decode_temperature(response.payload[3])), self._sensors[3]._round_places)
             _LOGGER.debug("- Soil humidity = "+str(self._sensors[0]._state)+", Battery = "+str(self._sensors[1]._state)+", Air humidity = "+str(self._sensors[2]._state)+", Temperature = "+str(self._sensors[3]._state))
             for sensor in self._sensors[:4]:
                 sensor.async_write_ha_state()
@@ -222,7 +226,7 @@ class HACoApSensorManager:
             self._sensors[0]._state = round(float(response.payload[0]), self._sensors[0]._round_places)
             self._sensors[1]._state = round(float(response.payload[1]), self._sensors[1]._round_places)
             self._sensors[2]._state = round(float(response.payload[2]), self._sensors[2]._round_places)
-            self._sensors[3]._state = round(float(response.payload[3]), self._sensors[3]._round_places)
+            self._sensors[3]._state = round(float(decode_temperature(response.payload[3])), self._sensors[3]._round_places)
             _LOGGER.debug("- Soil humidity = "+str(self._sensors[0]._state)+", Battery = "+str(self._sensors[1]._state)+", Air humidity = "+str(self._sensors[2]._state)+", Temperature = "+str(self._sensors[3]._state))
             for sensor in self._sensors[:4]:
                 sensor.async_write_ha_state()
