@@ -11,7 +11,7 @@ jobs:
   validate-hacs:
     runs-on: "ubuntu-latest"
     steps:
-      - uses: "actions/checkout@v4"
+      - uses: "actions/checkout@v5"
       - name: HACS validation
         uses: "hacs/action@main"
         with:
@@ -21,13 +21,13 @@ jobs:
     # Home Assistant's own checks of the manifest, translations and config flow
     runs-on: "ubuntu-latest"
     steps:
-      - uses: "actions/checkout@v4"
+      - uses: "actions/checkout@v5"
       - uses: "home-assistant/actions/hassfest@master"
 
   tests:
     runs-on: "ubuntu-latest"
     steps:
-      - uses: "actions/checkout@v4"
+      - uses: "actions/checkout@v5"
       - uses: "actions/setup-python@v5"
         with:
           python-version: "3.13"
