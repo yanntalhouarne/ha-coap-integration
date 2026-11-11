@@ -1,0 +1,54 @@
+{
+  "config": {
+    "flow_title": "{name}",
+    "step": {
+      "zeroconf_confirm": {
+        "title": "A plant board was found",
+        "description": "Board {id}, at {host}. Give it a name: its entities are named after it.",
+        "data": {
+          "name": "Name"
+        },
+        "data_description": {
+          "name": "Such as the plant it looks after"
+        }
+      },
+      "user": {
+        "title": "Add a plant board",
+        "description": "Its address (IPv6, without brackets) and a name. The board is asked for its ID, so it must answer.",
+        "data": {
+          "host": "Address",
+          "name": "Name"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "The board didn't answer at this address",
+      "no_device_id": "The board answered without a device ID: update its firmware"
+    },
+    "abort": {
+      "already_configured": "This board is added already (its address was updated)",
+      "no_device_id": "This device has no board ID in its name or its TXT record"
+    }
+  },
+  "entity": {
+    "sensor": {
+      "soil_moisture": { "name": "Soil moisture" },
+      "battery": { "name": "Battery" },
+      "air_humidity": { "name": "Air humidity" },
+      "temperature": { "name": "Temperature" },
+      "firmware": { "name": "Firmware" },
+      "hardware": { "name": "Hardware" },
+      "device_id": { "name": "Device ID" }
+    },
+    "binary_sensor": {
+      "connectivity": { "name": "Connectivity" }
+    },
+    "button": {
+      "pump": { "name": "Run the pump" },
+      "ping": { "name": "Beep" }
+    },
+    "number": {
+      "pump_run_time": { "name": "Pump run time" }
+    }
+  }
+}

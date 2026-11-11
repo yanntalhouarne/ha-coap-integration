@@ -1,0 +1,5 @@
+[tool.pytest.ini_options]
+# Home Assistant's test kit (pytest-homeassistant-custom-component): its tests are asyncio
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]

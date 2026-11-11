@@ -1,0 +1,2 @@
+# Home Assistant's test kit for custom integrations (it pins a Home Assistant version; Python 3.13)
+pytest-homeassistant-custom-component

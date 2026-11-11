@@ -1,0 +1,15 @@
+{
+  "domain": "ha_coap",
+  "name": "HA CoAP",
+  "codeowners": ["@yanntalhouarne"],
+  "config_flow": true,
+  "dependencies": [],
+  "documentation": "https://github.com/yanntalhouarne/ha-coap-integration",
+  "integration_type": "device",
+  "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/yanntalhouarne/ha-coap-integration/issues",
+  "loggers": ["custom_components.ha_coap"],
+  "requirements": [],
+  "version": "2.0.0",
+  "zeroconf": ["_ot._udp.local."]
+}
