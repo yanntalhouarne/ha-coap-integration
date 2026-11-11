@@ -1,0 +1,51 @@
+"""The blueprint: Home Assistant reads it, and an automation made from it waters when the plant
+needs water, in its hours, not twice within its wait."""
+
+from pathlib import Path
+from unittest.mock import patch
+
+from homeassistant.components.blueprint import models
+from homeassistant.components.blueprint.schemas import BLUEPRINT_SCHEMA
+from homeassistant.setup import async_setup_component
+from homeassistant.util import dt as dt_util
+from homeassistant.util.yaml import load_yaml_dict
+
+BLUEPRINT = Path(__file__).parents[1] / "blueprints" / "automation" / "ha_coap" / "water_when_dry.yaml"
+
+
+def test_it_is_a_valid_blueprint():
+    blueprint = models.Blueprint(load_yaml_dict(str(BLUEPRINT)), expected_domain="automation", schema=BLUEPRINT_SCHEMA)
+    assert set(blueprint.inputs) == {"needs_water", "pump", "seconds", "after", "before", "wait_hours"}
+
+
+def install(config_dir: str) -> None:
+    """The blueprint in Home Assistant's blueprints folder, as importing it would put it."""
+    target = Path(config_dir) / "blueprints" / "automation" / "ha_coap"
+    target.mkdir(parents=True, exist_ok=True)
+    (target / "water_when_dry.yaml").write_text(BLUEPRINT.read_text(encoding="utf-8"), encoding="utf-8")
+
+
+async def test_it_waters_when_the_plant_needs_water(hass):
+    await hass.async_add_executor_job(install, hass.config.config_dir)
+    watered = []
+
+    async def water(call):
+        watered.append((call.data.get("entity_id"), call.data.get("seconds")))
+
+    hass.services.async_register("ha_coap", "water", water)
+    hass.states.async_set("binary_sensor.basil_needs_water", "off")
+    assert await async_setup_component(hass, "automation", {"automation": {
+        "id": "water_basil", "use_blueprint": {"path": "ha_coap/water_when_dry.yaml", "input": {
+            "needs_water": "binary_sensor.basil_needs_water", "pump": "button.basil_run_the_pump", "seconds": 4,
+            "after": "00:00:00", "before": "23:59:59", "wait_hours": 3}}}})
+    await hass.async_block_till_done()
+    noon = dt_util.now().replace(hour=12, minute=0)
+    with patch("homeassistant.helpers.condition.dt_util.now", return_value=noon):
+        hass.states.async_set("binary_sensor.basil_needs_water", "on")
+        await hass.async_block_till_done()
+        assert len(watered) == 1 and watered[0][1] == 4
+        # Still dry soon after: not again within its wait
+        hass.states.async_set("binary_sensor.basil_needs_water", "off")
+        hass.states.async_set("binary_sensor.basil_needs_water", "on")
+        await hass.async_block_till_done()
+        assert len(watered) == 1

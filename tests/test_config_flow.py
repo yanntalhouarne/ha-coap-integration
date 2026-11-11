@@ -67,9 +67,16 @@ async def test_a_board_found_again_at_a_new_address(hass, board):
     assert board.requests[-1][0] == HOST
 
 
-async def test_a_board_added_by_its_address(hass, board):
+async def by_address(hass):
+    """The menu, then "Add a plant board by its address"."""
     result = await hass.config_entries.flow.async_init(DOMAIN, context={"source": config_entries.SOURCE_USER})
-    assert result["step_id"] == "user"
+    assert result["type"] is FlowResultType.MENU and result["menu_options"] == ["board", "fleet_manager"]
+    return await hass.config_entries.flow.async_configure(result["flow_id"], {"next_step_id": "board"})
+
+
+async def test_a_board_added_by_its_address(hass, board):
+    result = await by_address(hass)
+    assert result["step_id"] == "board"
     board.online = False
     result = await hass.config_entries.flow.async_configure(result["flow_id"], {CONF_HOST: f"[{HOST}]", CONF_NAME: "mint"})
     assert result["type"] is FlowResultType.FORM and result["errors"] == {"base": "cannot_connect"}
@@ -82,6 +89,6 @@ async def test_a_board_added_by_its_address(hass, board):
 
 async def test_a_board_by_its_address_without_an_id(hass, board):
     board.info = "3e0592d,1.0"  # older firmware
-    result = await hass.config_entries.flow.async_init(DOMAIN, context={"source": config_entries.SOURCE_USER})
+    result = await by_address(hass)
     result = await hass.config_entries.flow.async_configure(result["flow_id"], {CONF_HOST: HOST, CONF_NAME: "mint"})
     assert result["errors"] == {"base": "no_device_id"}

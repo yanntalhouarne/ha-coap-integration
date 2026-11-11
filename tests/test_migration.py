@@ -54,8 +54,11 @@ async def test_a_board_discovered_by_version_1(hass, board):
     # The same device, with the board's ID; named after the entry once its entities are set up
     moved = dr.async_get(hass).async_get_device(identifiers={(DOMAIN, DEVICE_ID)})
     assert moved.id == device.id and moved.name == "basil"
-    # No new entities beside the old ones, and they work
-    assert len(er.async_entries_for_config_entry(registry, entry.entry_id)) == len(OLD_ENTITIES)
+    # No second entity beside each old one (only the new kinds of entities are new), and they work
+    unique_ids = [e.unique_id for e in er.async_entries_for_config_entry(registry, entry.entry_id)]
+    assert len(unique_ids) == len(set(unique_ids)) and not any(u.startswith(OLD_ID) for u in unique_ids)
+    assert len([e for e in er.async_entries_for_config_entry(registry, entry.entry_id)
+                if e.entity_id in {old[2] for old in OLD_ENTITIES}]) == len(OLD_ENTITIES)
     assert hass.states.get("sensor.basil_soil_humidity").state == "42"
     assert hass.states.get("number.basil_pump_duty_cycle").state == "3"
 

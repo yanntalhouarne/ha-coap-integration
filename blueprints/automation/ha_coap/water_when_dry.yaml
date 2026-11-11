@@ -1,0 +1,87 @@
+blueprint:
+  name: Water a plant when it's dry (HA CoAP)
+  description: >
+    Runs a plant board's pump when its plant needs water (its Needs water sensor, from its Water
+    below number), only between two times of the day, and at least so many hours after the last
+    time, so the water reaches the sensor before it's watered again. For plants the fleet
+    manager's automatic watering doesn't look after: don't use both on one plant.
+  domain: automation
+  source_url: https://github.com/yanntalhouarne/ha-coap-integration/blob/master/blueprints/automation/ha_coap/water_when_dry.yaml
+  input:
+    needs_water:
+      name: Needs water
+      description: The board's Needs water sensor.
+      selector:
+        entity:
+          filter:
+            - integration: ha_coap
+              domain: binary_sensor
+    pump:
+      name: Pump
+      description: The same board's Run the pump button.
+      selector:
+        entity:
+          filter:
+            - integration: ha_coap
+              domain: button
+    seconds:
+      name: For how long
+      description: How long the pump runs (1 to 9 s).
+      default: 3
+      selector:
+        number:
+          min: 1
+          max: 9
+          unit_of_measurement: s
+    after:
+      name: Not before
+      default: "07:00:00"
+      selector:
+        time: {}
+    before:
+      name: Not after
+      default: "21:00:00"
+      selector:
+        time: {}
+    wait_hours:
+      name: Hours between two waterings, at least
+      description: For the water to reach the soil sensor.
+      default: 3
+      selector:
+        number:
+          min: 0.5
+          max: 72
+          step: 0.5
+          unit_of_measurement: h
+
+mode: single
+max_exceeded: silent
+
+triggers:
+  - trigger: state
+    entity_id: !input needs_water
+    to: "on"
+  - trigger: time_pattern
+    minutes: "/30"
+
+conditions:
+  - condition: state
+    entity_id: !input needs_water
+    state: "on"
+  - condition: time
+    after: !input after
+    before: !input before
+  - condition: template
+    value_template: >
+      {% set last = this.attributes.last_triggered %}
+      {{ last is none or (now() - last).total_seconds() > wait_hours * 3600 }}
+
+variables:
+  wait_hours: !input wait_hours
+
+actions:
+  - action: ha_coap.water
+    target:
+      entity_id: !input pump
+    data:
+      seconds: !input seconds

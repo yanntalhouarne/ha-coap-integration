@@ -2,6 +2,13 @@
   "config": {
     "flow_title": "{name}",
     "step": {
+      "user": {
+        "title": "HA CoAP",
+        "menu_options": {
+          "board": "Add a plant board by its address",
+          "fleet_manager": "Connect the fleet manager (firmware updates)"
+        }
+      },
       "zeroconf_confirm": {
         "title": "A plant board was found",
         "description": "Board {id}, at {host}. Give it a name: its entities are named after it.",
@@ -12,22 +19,83 @@
           "name": "Such as the plant it looks after"
         }
       },
-      "user": {
+      "board": {
         "title": "Add a plant board",
         "description": "Its address (IPv6, without brackets) and a name. The board is asked for its ID, so it must answer.",
         "data": {
           "host": "Address",
           "name": "Name"
         }
+      },
+      "fleet_manager": {
+        "title": "Connect the fleet manager",
+        "description": "The fleet manager (the ha-coap-server app) updates the boards' firmware. In it: Settings, Other devices, make a link with \"For the HA CoAP integration\" ticked, then paste its address and key here. Each board then has a firmware update in Settings, Updates.",
+        "data": {
+          "url": "Address",
+          "api_key": "Key"
+        },
+        "data_description": {
+          "url": "Such as http://192.168.1.20:8710"
+        }
+      },
+      "reconfigure": {
+        "title": "Reconfigure",
+        "description": "A board's new address (it must be the same board), or the fleet manager's address and key.",
+        "data": {
+          "host": "Address",
+          "url": "Address",
+          "api_key": "Key"
+        }
       }
     },
     "error": {
-      "cannot_connect": "The board didn't answer at this address",
-      "no_device_id": "The board answered without a device ID: update its firmware"
+      "cannot_connect": "No answer at this address",
+      "no_device_id": "The board answered without a device ID: update its firmware",
+      "another_board": "Another board answers at this address",
+      "invalid_auth": "The fleet manager refused the key: make a new link for Home Assistant in it"
     },
     "abort": {
-      "already_configured": "This board is added already (its address was updated)",
-      "no_device_id": "This device has no board ID in its name or its TXT record"
+      "already_configured": "This is added already (its address was updated)",
+      "no_device_id": "This device has no board ID in its name or its TXT record",
+      "reconfigure_successful": "Saved"
+    }
+  },
+  "issues": {
+    "unreachable": {
+      "title": "{name} hasn't answered for a day",
+      "fix_flow": {
+        "step": {
+          "init": {
+            "title": "{name} doesn't answer",
+            "description": "{name} hasn't answered at {host} for a day. A new border router gives every board a new address: give its new one (the fleet manager shows it). If the board is gone, remove it instead (Settings, Devices & services, HA CoAP).",
+            "data": {
+              "host": "Address"
+            }
+          }
+        },
+        "error": {
+          "cannot_connect": "No answer at this address",
+          "no_device_id": "The board answered without a device ID",
+          "another_board": "Another board answers at this address"
+        }
+      }
+    }
+  },
+  "exceptions": {
+    "not_a_pump": {
+      "message": "Only a board's Run the pump button waters: choose that one"
+    }
+  },
+  "services": {
+    "water": {
+      "name": "Water",
+      "description": "Runs a board's pump, for a given time or its run time. Its run time setting doesn't change.",
+      "fields": {
+        "seconds": {
+          "name": "Seconds",
+          "description": "How long the pump runs, 1 to 9 s. Empty: its run time."
+        }
+      }
     }
   },
   "entity": {
@@ -36,19 +104,87 @@
       "battery": { "name": "Battery" },
       "air_humidity": { "name": "Air humidity" },
       "temperature": { "name": "Temperature" },
+      "next_watering": { "name": "Next watering" },
+      "last_watered": { "name": "Last watered" },
+      "water_used": { "name": "Water used" },
       "firmware": { "name": "Firmware" },
       "hardware": { "name": "Hardware" },
-      "device_id": { "name": "Device ID" }
+      "device_id": { "name": "Device ID" },
+      "signal": { "name": "Signal" },
+      "link_quality": { "name": "Link quality" },
+      "parent": { "name": "Parent router" },
+      "role": {
+        "name": "Thread role",
+        "state": {
+          "disabled": "Disabled",
+          "detached": "Detached",
+          "child": "Child",
+          "router": "Router",
+          "leader": "Leader"
+        }
+      },
+      "restarts": { "name": "Restarts" },
+      "last_restart": { "name": "Last restart" },
+      "restart_cause": {
+        "name": "Last restart cause",
+        "state": {
+          "power": "Power on",
+          "pin": "Reset pin",
+          "soft": "Software reset",
+          "watchdog": "Watchdog",
+          "lockup": "CPU lockup",
+          "crash": "Crash",
+          "other": "Other"
+        }
+      },
+      "soil_voltage": { "name": "Soil sensor voltage" }
     },
     "binary_sensor": {
-      "connectivity": { "name": "Connectivity" }
+      "connectivity": { "name": "Connectivity" },
+      "needs_water": { "name": "Needs water" },
+      "pump_running": { "name": "Pump running" },
+      "charging": { "name": "Charging" },
+      "plugged_in": { "name": "Plugged in" }
     },
     "button": {
       "pump": { "name": "Run the pump" },
       "ping": { "name": "Beep" }
     },
     "number": {
-      "pump_run_time": { "name": "Pump run time" }
+      "pump_run_time": { "name": "Pump run time" },
+      "water_below": { "name": "Water below" },
+      "pump_flow": { "name": "Pump flow" }
+    },
+    "event": {
+      "restarted": {
+        "name": "Restarted",
+        "state_attributes": {
+          "event_type": {
+            "state": {
+              "power": "Power on",
+              "pin": "Reset pin",
+              "soft": "Software reset",
+              "watchdog": "Watchdog",
+              "lockup": "CPU lockup",
+              "crash": "Crash",
+              "other": "Other"
+            }
+          }
+        }
+      },
+      "button_pressed": {
+        "name": "Pump button",
+        "state_attributes": {
+          "event_type": {
+            "state": {
+              "pressed": "Pressed"
+            }
+          }
+        }
+      }
+    },
+    "update": {
+      "firmware_update": { "name": "Firmware" }
     }
   }
 }
