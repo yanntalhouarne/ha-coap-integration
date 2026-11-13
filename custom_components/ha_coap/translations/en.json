@@ -154,7 +154,8 @@
       "water_tank": { "name": "Water tank" },
       "water_tank_days_left": { "name": "Water tank days left" },
       "battery_days_left": { "name": "Battery days left" },
-      "care_due": { "name": "Care due" }
+      "care_due": { "name": "Care due" },
+      "round_trip": { "name": "Round trip" }
     },
     "binary_sensor": {
       "connectivity": { "name": "Connectivity" },

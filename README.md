@@ -130,6 +130,7 @@ November 2026 or later):
 | Water tank refilled | Press it once the tank is full again: it's counted from now |
 | Battery days left | When its battery runs flat, from its trend over two weeks (unknown on USB power, or without a clear trend yet) |
 | Care due | How many of its care tasks are due (with them all, for its card). Only for a plant with care tasks |
+| Round trip | Diagnostic: its last silent ping's round trip (unknown when it didn't answer; attributes `answered`, `pinged`). From **ping all** on the fleet manager's Network tab, or its timed pings (Settings → Network and timing → Ping every). Only once a board has been pinged, by a fleet manager that keeps round trips (November 13, 2026 or later) |
 | Photo | Its plant's newest photo, added in the fleet manager (its page, the photo): the card's avatar. Only for a plant with a photo |
 
 And one to-do list, **Plant care**, of the plants' care tasks (fertilize, repot...: added in the

@@ -1,5 +1,6 @@
 """From the fleet manager, on each plant's device: its water tank (how full, the days it lasts,
-low, and a button for a tank refilled), its battery's days left, and its photo. And one to-do list, Plant
+low, and a button for a tank refilled), its battery's days left, its photo, and its last silent ping's
+round trip. And one to-do list, Plant
 care, of the plants' care tasks (fertilize, repot...). The fleet manager keeps them: it counts
 each pump run against the tank (Home Assistant's too), and its care tasks come back after they're
 done."""
@@ -16,7 +17,7 @@ from homeassistant.components.image import ImageEntity
 from homeassistant.components.sensor import SensorDeviceClass, SensorEntity, SensorStateClass
 from homeassistant.components.todo import TodoItem, TodoItemStatus, TodoListEntity, TodoListEntityFeature
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import PERCENTAGE, UnitOfTime
+from homeassistant.const import PERCENTAGE, EntityCategory, UnitOfTime
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers import device_registry as dr
@@ -63,6 +64,11 @@ def tank_sensors(fleet: FleetCoordinator, device_id: str, plant: dict) -> list[E
 
 def battery_sensors(fleet: FleetCoordinator, device_id: str, plant: dict) -> list[Entity]:
     return [BatteryDaysLeft(fleet, device_id)]
+
+
+def round_trip_sensors(fleet: FleetCoordinator, device_id: str, plant: dict) -> list[Entity]:
+    # Once it has been pinged (Ping all, or the fleet manager's timed pings)
+    return [RoundTrip(fleet, device_id)] if plant.get("round_trip") else []
 
 
 def care_sensors(fleet: FleetCoordinator, device_id: str, plant: dict) -> list[Entity]:
@@ -168,6 +174,42 @@ class BatteryDaysLeft(PlantEntity, DaysLeft):
     @property
     def extra_state_attributes(self) -> dict[str, Any] | None:
         return {"on_usb": bool((self.plant or {}).get("on_usb"))}
+
+
+class RoundTrip(PlantEntity, SensorEntity):
+    """Its last silent ping's round trip, from the fleet manager (Ping all on its Network tab, or
+    every 'Ping every' minutes when that's on): a board getting slower shows before it drops off.
+    Unknown when it didn't answer (answered: false)."""
+
+    _attr_device_class = SensorDeviceClass.DURATION
+    _attr_native_unit_of_measurement = UnitOfTime.MILLISECONDS
+    _attr_suggested_unit_of_measurement = UnitOfTime.SECONDS
+    _attr_suggested_display_precision = 1
+    _attr_state_class = SensorStateClass.MEASUREMENT
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+    _attr_icon = "mdi:timer-sync-outline"
+
+    def __init__(self, fleet: FleetCoordinator, device_id: str) -> None:
+        super().__init__(fleet, device_id, "round_trip")
+
+    @property
+    def _ping(self) -> dict | None:
+        return (self.plant or {}).get("round_trip")
+
+    @property
+    def available(self) -> bool:
+        return super().available and self._ping is not None
+
+    @property
+    def native_value(self) -> int | None:
+        return self._ping["ms"] if self._ping else None
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any] | None:
+        if not self._ping:
+            return None
+        return {"answered": self._ping["ms"] is not None,
+                "pinged": dt_util.utc_from_timestamp(self._ping["time"]).isoformat()}
 
 
 class CareDue(PlantEntity, SensorEntity):

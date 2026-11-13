@@ -39,8 +39,11 @@ async def test_it_waters_when_the_plant_needs_water(hass):
             "needs_water": "binary_sensor.basil_needs_water", "pump": "button.basil_run_the_pump", "seconds": 4,
             "after": "00:00:00", "before": "23:59:59", "wait_hours": 3}}}})
     await hass.async_block_till_done()
-    noon = dt_util.now().replace(hour=12, minute=0)
-    with patch("homeassistant.helpers.condition.dt_util.now", return_value=noon):
+    # In its hours, and not ahead of the real time: the automation's last run is stamped with the real
+    # time, so a made-up noon at 4 am would be 8 h after it, past its wait (it failed from 0 to 9 am)
+    now = dt_util.now()
+    in_hours = now.replace(hour=min(now.hour, 22))
+    with patch("homeassistant.helpers.condition.dt_util.now", return_value=in_hours):
         hass.states.async_set("binary_sensor.basil_needs_water", "on")
         await hass.async_block_till_done()
         assert len(watered) == 1 and watered[0][1] == 4

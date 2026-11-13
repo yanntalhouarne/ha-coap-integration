@@ -88,9 +88,9 @@ async def test_each_board_has_a_firmware_update(hass, aioclient_mock, board):
     assert hass.states.get(update).state == STATE_OFF
 
 
-def plants(tank=True, battery_days_left=37.6, care=None, photo=None):
+def plants(tank=True, battery_days_left=37.6, care=None, photo=None, round_trip=None):
     now = time.time()
-    return {"devices": [{"photo": photo,
+    return {"devices": [{"photo": photo, "round_trip": round_trip,
         "device_id": DEVICE_ID, "name": "basil", "on_usb": False, "battery_days_left": battery_days_left,
         "tank": {"size_ml": 1000, "left_ml": 150, "percent": 15, "low": True, "per_day_ml": 50, "filled": now - 17 * 86400,
                  "days_left": 3.0} if tank else None,
@@ -217,3 +217,24 @@ async def test_each_plant_has_its_photo(hass, aioclient_mock, board, hass_client
     fleet.runtime_data.async_set_updated_data({**firmware(), "plants": {DEVICE_ID: plants(photo=None)["devices"][0]}})
     await hass.async_block_till_done()
     assert hass.states.get(photo.entity_id).state == "unavailable"
+
+
+async def test_a_boards_round_trip(hass, aioclient_mock, board):
+    """Its last silent ping from the fleet manager: in seconds, unknown when it didn't answer; no
+    sensor before a first ping."""
+    await set_up_both(hass, aioclient_mock, plants())
+    assert plant_entity(hass, "sensor", "round_trip") is None
+    fleet = next(e for e in hass.config_entries.async_entries(DOMAIN) if e.unique_id == "fleet_manager")
+    pinged = time.time() - 60
+    fleet.runtime_data.async_set_updated_data(fleet.runtime_data.data | {"plants": {p["device_id"]: p for p in plants(round_trip={"time": pinged, "ms": 1450})["devices"]}})
+    await hass.async_block_till_done()
+    state = hass.states.get(plant_entity(hass, "sensor", "round_trip"))
+    assert state is not None, "no sensor"
+    assert float(state.state) == pytest.approx(1.45) and state.attributes["unit_of_measurement"] == "s"
+    assert state.attributes["answered"] is True
+    entry = er.async_get(hass).async_get(state.entity_id)
+    assert entry.entity_category == "diagnostic"
+    fleet.runtime_data.async_set_updated_data(fleet.runtime_data.data | {"plants": {p["device_id"]: p for p in plants(round_trip={"time": pinged + 3600, "ms": None})["devices"]}})
+    await hass.async_block_till_done()
+    state = hass.states.get(plant_entity(hass, "sensor", "round_trip"))
+    assert state.state == "unknown" and state.attributes["answered"] is False
