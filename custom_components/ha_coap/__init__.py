@@ -5,17 +5,24 @@ it for its readings and gets its pushes; its entities show them, run its pump an
 entry can connect the fleet manager (the ha-coap-server app): each board then has a firmware
 update in Home Assistant's Updates, each plant its water tank and its battery's days left, and the
 plants' care tasks are a to-do list.
+
+The integration also serves a dashboard card, HA CoAP plant (custom:ha-coap-plant-card), loaded by
+the frontend: no resource to add.
 """
 
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 
 from homeassistant.const import CONF_HOST, CONF_ID, CONF_URL, Platform
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers import issue_registry as ir
+from homeassistant.helpers.typing import ConfigType
+from homeassistant.loader import async_get_integration
 
 from . import coap
 from .const import DOMAIN, board_id, clean_host
@@ -25,7 +32,25 @@ from .fleet import FleetCoordinator
 _LOGGER = logging.getLogger(__name__)
 
 PLATFORMS = [Platform.SENSOR, Platform.BINARY_SENSOR, Platform.BUTTON, Platform.NUMBER, Platform.EVENT]
+CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
+CARD_URL = "/ha_coap/ha-coap-plant-card.js"
+CARD_FILE = Path(__file__).parent / "frontend" / "ha-coap-plant-card.js"
+
 FLEET_PLATFORMS = [Platform.UPDATE, Platform.SENSOR, Platform.BINARY_SENSOR, Platform.BUTTON, Platform.TODO]
+
+
+async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
+    """The plant card: served here, and loaded by the frontend (its version in its address, so
+    an update of the integration loads the new one)."""
+    if hass.http is None or "frontend" not in hass.config.components:
+        return True  # no web server (tests), or no frontend
+    from homeassistant.components.frontend import add_extra_js_url
+    from homeassistant.components.http import StaticPathConfig
+
+    version = (await async_get_integration(hass, DOMAIN)).version
+    await hass.http.async_register_static_paths([StaticPathConfig(CARD_URL, str(CARD_FILE), True)])
+    add_extra_js_url(hass, f"{CARD_URL}?v={version}")
+    return True
 
 
 def is_fleet_entry(entry) -> bool:

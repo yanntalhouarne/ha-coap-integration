@@ -50,6 +50,27 @@ time, 1 to 9 s, without changing its run time.
 
 Download diagnostics (on a board's device page) for what it last said, when something's wrong.
 
+## The plant card
+
+The integration comes with a dashboard card, **HA CoAP plant**: edit a dashboard → **Add card** →
+HA CoAP plant (or search "plant"), and choose the plant board. Nothing else to install: the
+integration serves it, and an update of the integration updates it (reload the page once).
+
+```yaml
+type: custom:ha-coap-plant-card
+device: <the board's device: chosen in the card's editor>
+name: Basil   # optional: else the device's name
+```
+
+It shows how the plant is (happy, thirsty, watering, soaked, not answering) as its color, its soil
+as a gauge with its Water below target marked, when it needs water next and when it was last
+watered, the water used, its soil over the last 2 days (with the target), its battery (and its
+days left, or charging), temperature and air. Then its pump: the run time as a slider and
+**Water** (tap twice: once to ask, once to water). With the fleet manager connected: its water
+tank (with **Refilled**, tapped twice too) and its care tasks that are due (tap one once it's
+done; the next one coming shows under them). Tapping a value opens its entity. It follows the
+theme (light, dark) and fits a phone.
+
 ## Pushes, and gaps filled in
 
 Newer firmware keeps its last samples (`hist`: 192, two days at one per 15 minutes) and pushes the
@@ -87,6 +108,7 @@ November 2026 or later):
 | Water tank low | On at 20 % left |
 | Water tank refilled | Press it once the tank is full again: it's counted from now |
 | Battery days left | When its battery runs flat, from its trend over two weeks (unknown on USB power, or without a clear trend yet) |
+| Care due | How many of its care tasks are due (with them all, for its card). Only for a plant with care tasks |
 
 And one to-do list, **Plant care**, of the plants' care tasks (fertilize, repot...: added in the
 fleet manager, on each plant's page). One that's due is to do; tick it once done, and it's checked

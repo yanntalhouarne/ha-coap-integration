@@ -64,6 +64,10 @@ def battery_sensors(fleet: FleetCoordinator, device_id: str, plant: dict) -> lis
     return [BatteryDaysLeft(fleet, device_id)]
 
 
+def care_sensors(fleet: FleetCoordinator, device_id: str, plant: dict) -> list[Entity]:
+    return [CareDue(fleet, device_id)] if plant.get("care") else []
+
+
 def tank_binary_sensors(fleet: FleetCoordinator, device_id: str, plant: dict) -> list[Entity]:
     return [WaterTankLow(fleet, device_id)] if plant.get("tank") is not None else []
 
@@ -159,6 +163,32 @@ class BatteryDaysLeft(PlantEntity, DaysLeft):
     @property
     def extra_state_attributes(self) -> dict[str, Any] | None:
         return {"on_usb": bool((self.plant or {}).get("on_usb"))}
+
+
+class CareDue(PlantEntity, SensorEntity):
+    """How many of its care tasks are due, with all of them (for its plant card, which ticks
+    them on the Plant care list)."""
+
+    _attr_icon = "mdi:sprout"
+    _unrecorded_attributes = frozenset({"tasks"})
+
+    def __init__(self, fleet: FleetCoordinator, device_id: str) -> None:
+        super().__init__(fleet, device_id, "care_due")
+
+    def _tasks(self) -> list[dict]:
+        return sorted((self.plant or {}).get("care") or [], key=lambda t: (t["due"], t["id"]))
+
+    @property
+    def native_value(self) -> int:
+        now = time.time()
+        return sum(1 for task in self._tasks() if task["due"] <= now)
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        now = time.time()
+        return {"tasks": [{"uid": str(task["id"]), "what": task["what"], "every_days": task["every_days"],
+                           "due": dt_util.utc_from_timestamp(task["due"]).isoformat(), "due_now": task["due"] <= now}
+                          for task in self._tasks()]}
 
 
 class WaterTankLow(TankEntity, BinarySensorEntity):

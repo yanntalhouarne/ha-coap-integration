@@ -105,3 +105,22 @@ async def test_unload(hass, board):
     assert await hass.config_entries.async_unload(entry.entry_id)
     await hass.async_block_till_done()
     assert entry.state is ConfigEntryState.NOT_LOADED
+
+
+async def test_the_plant_card_is_served(hass):
+    """The dashboard card: served by the integration, and loaded by the frontend (no resource to add)."""
+    from pathlib import Path
+    from unittest.mock import AsyncMock, MagicMock, patch
+
+    from homeassistant.setup import async_setup_component
+
+    from custom_components.ha_coap.const import DOMAIN
+
+    hass.http = MagicMock(async_register_static_paths=AsyncMock())
+    hass.config.components.add("frontend")
+    with patch("homeassistant.components.frontend.add_extra_js_url") as add:
+        assert await async_setup_component(hass, DOMAIN, {})
+    served = hass.http.async_register_static_paths.call_args[0][0][0]
+    assert served.url_path == "/ha_coap/ha-coap-plant-card.js"
+    assert await hass.async_add_executor_job(Path(served.path).is_file)
+    assert add.call_args[0][1].startswith("/ha_coap/ha-coap-plant-card.js?v=")

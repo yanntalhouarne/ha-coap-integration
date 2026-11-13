@@ -157,6 +157,7 @@ async def test_a_plant_without_a_tank_has_no_tank_entities(hass, aioclient_mock,
     assert plant_entity(hass, "sensor", "water_tank") is None
     assert plant_entity(hass, "button", "water_tank_refilled") is None
     assert plant_entity(hass, "sensor", "battery_days_left") is not None
+    assert plant_entity(hass, "sensor", "care_due") is not None
     # Its tank set up later: they appear
     fleet.runtime_data.async_set_updated_data({**firmware(), "plants": {DEVICE_ID: plants()["devices"][0]}})
     await hass.async_block_till_done()
@@ -167,6 +168,10 @@ async def test_the_plants_care_tasks_are_a_to_do_list(hass, aioclient_mock, boar
     await set_up_both(hass, aioclient_mock, plants())
     todo = er.async_get(hass).async_get_entity_id("todo", DOMAIN, "fleet_manager_plant_care")
     assert hass.states.get(todo).state == "1"  # one to do now: Fertilize (Repot is done until it's due)
+    care = hass.states.get(plant_entity(hass, "sensor", "care_due"))  # the plant's own, for its card
+    assert care.state == "1"
+    assert [(t["uid"], t["what"], t["due_now"]) for t in care.attributes["tasks"]] == [("1", "Fertilize", True),
+                                                                                        ("2", "Repot", False)]
     items = await hass.services.async_call("todo", "get_items", {ATTR_ENTITY_ID: todo}, blocking=True,
                                            return_response=True)
     listed = [(i["summary"], i["status"], i["description"]) for i in items[todo]["items"]]

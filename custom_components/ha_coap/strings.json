@@ -153,7 +153,8 @@
       "soil_voltage": { "name": "Soil sensor voltage" },
       "water_tank": { "name": "Water tank" },
       "water_tank_days_left": { "name": "Water tank days left" },
-      "battery_days_left": { "name": "Battery days left" }
+      "battery_days_left": { "name": "Battery days left" },
+      "care_due": { "name": "Care due" }
     },
     "binary_sensor": {
       "connectivity": { "name": "Connectivity" },
