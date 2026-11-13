@@ -56,7 +56,9 @@ Download diagnostics (on a board's device page) for what it last said, when some
 
 The integration comes with a dashboard card, **HA CoAP plant**: edit a dashboard → **Add card** →
 HA CoAP plant (or search "plant"), and choose the plant board. Nothing else to install: the
-integration serves it, and an update of the integration updates it (reload the page once).
+integration serves it, and an update of the integration updates it. Browsers check it at each page
+load, so a release that only changes the card (its notes say so) needs no restart of Home
+Assistant: update it in Marketplace, then reload the page.
 
 ```yaml
 type: custom:ha-coap-plant-card

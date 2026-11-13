@@ -7,13 +7,17 @@ update in Home Assistant's Updates, each plant its water tank and its battery's 
 plants' care tasks are a to-do list.
 
 The integration also serves a dashboard card, HA CoAP plant (custom:ha-coap-plant-card), loaded by
-the frontend: no resource to add.
+the frontend: no resource to add. Browsers check it at each page load, so an update that changes
+only the card shows after a reload, without restarting Home Assistant.
 """
 
 from __future__ import annotations
 
 import logging
 from pathlib import Path
+
+from aiohttp import web
+from homeassistant.components.http import HomeAssistantView
 
 from homeassistant.const import CONF_HOST, CONF_ID, CONF_URL, Platform
 from homeassistant.core import HomeAssistant, callback
@@ -39,16 +43,27 @@ CARD_FILE = Path(__file__).parent / "frontend" / "ha-coap-plant-card.js"
 FLEET_PLATFORMS = [Platform.UPDATE, Platform.SENSOR, Platform.BINARY_SENSOR, Platform.BUTTON, Platform.TODO]
 
 
+class PlantCardView(HomeAssistantView):
+    """The plant card's file, as it is on disk now. Browsers keep it but ask again at each page
+    load ("no-cache"; unchanged, the answer is a short 304), so a new card installed by an update
+    shows after a reload, without a restart."""
+
+    url = CARD_URL
+    name = "ha_coap:plant_card"
+    requires_auth = False  # loaded by the frontend's page, like its own scripts
+
+    async def get(self, request: web.Request) -> web.FileResponse:
+        return web.FileResponse(CARD_FILE, headers={"Cache-Control": "no-cache"})
+
+
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
-    """The plant card: served here, and loaded by the frontend (its version in its address, so
-    an update of the integration loads the new one)."""
+    """The plant card: served here, and loaded by the frontend."""
     if hass.http is None or "frontend" not in hass.config.components:
         return True  # no web server (tests), or no frontend
     from homeassistant.components.frontend import add_extra_js_url
-    from homeassistant.components.http import StaticPathConfig
 
     version = (await async_get_integration(hass, DOMAIN)).version
-    await hass.http.async_register_static_paths([StaticPathConfig(CARD_URL, str(CARD_FILE), True)])
+    hass.http.register_view(PlantCardView())
     add_extra_js_url(hass, f"{CARD_URL}?v={version}")
     return True
 
