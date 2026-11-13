@@ -264,6 +264,7 @@ class Diagnostics:
     button_s: int | None         # its pump's run time started with its button since boot (s)
     pump_ms: int | None          # its pump's run time since boot, whatever started it (ms)
     observers: int               # how many can observe 'hist' at once (1 before this field)
+    pump_s: int | None = None    # its pump's run time setting (s), 1 to 9 (None before this field)
 
 
 def parse_diag(payload: bytes) -> Diagnostics:
@@ -285,10 +286,12 @@ def parse_diag(payload: bytes) -> Diagnostics:
         return f"0x{fields[key]}" if fields.get(key) else ""
 
     soil_mv = number("soil_mv")
+    pump_s = number("pump_s")
     return Diagnostics(number("boots") or 0, number("up") or 0, fields["reset"], fields.get("fault", ""),
                        fields.get("role", ""), hex16("rloc"), hex16("parent"), number("rssi"), number("lq"),
                        soil_mv if soil_mv is not None and soil_mv >= 0 else None, fields.get("power", ""),
-                       number("button_s"), number("pump_ms"), number("observers") or 1)
+                       number("button_s"), number("pump_ms"), number("observers") or 1,
+                       pump_s if pump_s is not None and 1 <= pump_s <= 9 else None)
 
 
 # ---------------------------------------------------------------- 'hist': the samples a board keeps

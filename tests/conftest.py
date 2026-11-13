@@ -36,6 +36,7 @@ class Board:
         self.diag: dict | None = {"boots": 7, "up": 3600, "reset": "power", "role": "child", "rloc": "f802",
                                   "parent": "f800", "rssi": -71, "lq": 3, "soil_mv": 900, "power": "battery",
                                   "button_s": 0, "pump_ms": 0, "observers": 3}
+        self.diag_pump_s = True  # its 'diag' tells its pump's run time (newer firmware)
         self.samples: list[tuple[int, int, int, int, int, str]] | None = []  # (uptime, soil, battery, air, temp, power)
         self.boot = 7
 
@@ -69,7 +70,8 @@ class Board:
         if path == "ping":
             return coap.CHANGED, b""
         if path == "diag" and self.diag is not None:
-            return coap.CONTENT, ",".join(f"{k}={v}" for k, v in self.diag.items()).encode()
+            fields = {**self.diag, **({"pump_s": self.pump_s} if self.diag_pump_s else {})}
+            return coap.CONTENT, ",".join(f"{k}={v}" for k, v in fields.items()).encode()
         if path == "hist" and self.samples is not None:
             first = next((int(q[5:]) for q in query if q.startswith("from=")), 0)
             return coap.CONTENT, self.history_payload(first)

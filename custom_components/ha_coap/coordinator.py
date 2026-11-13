@@ -10,6 +10,7 @@ missed, and tell when the plant will need water.
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import time
 from collections.abc import Callable
@@ -78,6 +79,7 @@ class HaCoapCoordinator(DataUpdateCoordinator[BoardState]):
         self._issue_cleared = False
         self._stop_running = None
         self._watered_at: float | None = None  # when its pump last ran, seen from here
+        self._pump_lock = asyncio.Lock()  # its run time is changed from here: read it after
 
     # ------------------------------------------------------------ reading the board
 
@@ -92,11 +94,15 @@ class HaCoapCoordinator(DataUpdateCoordinator[BoardState]):
         previous = self.data
         info = previous.info if previous else None
         pump_s = previous.pump_s if previous else None
-        if info is None or pump_s is None or self._updates % INFO_EVERY == 0:
+        rarely = self._updates % INFO_EVERY == 0
+        if info is None or rarely:
             info = await self._read_info() or info
-            pump_s = await self.read_pump_s() or pump_s
         self._updates += 1
         diag = await self._read_diag()
+        if diag is not None and diag.pump_s is not None:
+            pump_s = diag.pump_s  # newer firmware tells it at every reading
+        elif pump_s is None or rarely:
+            pump_s = await self.read_pump_s() or pump_s
         if diag is not None:
             self._diag_changes(diag)
         diag = diag or (previous.diag if previous else None)
@@ -225,7 +231,9 @@ class HaCoapCoordinator(DataUpdateCoordinator[BoardState]):
 
     @callback
     def on_push(self, payload: bytes) -> None:
-        """The board pushed its new samples (a watering, plugged in...): its readings at once."""
+        """The board pushed its new samples (a watering, plugged in...): its readings at once. A
+        push without new samples: its settings changed (its pump's run time, set in the fleet
+        manager...), read again."""
         try:
             history = coap.parse_history(payload)
         except coap.CoapError:
@@ -233,11 +241,23 @@ class HaCoapCoordinator(DataUpdateCoordinator[BoardState]):
         if self._hist_boot is not None and history.boot != self._hist_boot:
             self._hist_next = 0  # it restarted: read again from its first at the next reading
         added = self._keep(history, time.time())
-        if not added or self.data is None:
+        if self.data is None:
+            return
+        if not added:
+            self.config_entry.async_create_background_task(self.hass, self._pump_s_changed(),
+                                                           f"{DOMAIN} pump run time of {self.name}")
             return
         newest = added[-1][1]
         data = coap.Data(newest.soil_moisture, newest.battery, newest.air_humidity, newest.temperature)
         self.async_set_updated_data(replace(self.data, data=data, power=newest.power or self.data.power))
+
+    async def _pump_s_changed(self) -> None:
+        """Its pump's run time, read again (after its changes from here: not one of the Water
+        action's, which it puts back)."""
+        async with self._pump_lock:
+            value = await self.read_pump_s()
+        if value is not None and self.data is not None and value != self.data.pump_s:
+            self.async_set_updated_data(replace(self.data, pump_s=value))
 
     # ------------------------------------------------------------ when it doesn't answer
 
@@ -277,7 +297,8 @@ class HaCoapCoordinator(DataUpdateCoordinator[BoardState]):
 
     async def set_pump_s(self, seconds: int) -> int:
         """Sets its pump's run time (1 to 9 s); returns the one it uses now."""
-        answer = await self.put("pumpdc", str(seconds).encode())
+        async with self._pump_lock:
+            answer = await self.put("pumpdc", str(seconds).encode())
         value = answer[0] if answer and 1 <= answer[0] <= 9 else seconds
         if self.data is not None:
             self.async_set_updated_data(replace(self.data, pump_s=value))
@@ -287,11 +308,12 @@ class HaCoapCoordinator(DataUpdateCoordinator[BoardState]):
         """Runs its pump: for its run time, or for 'seconds' (1 to 9) without changing it (its run
         time is set for this run, then put back: the board times a run when it starts)."""
         run_time = self.data.pump_s if self.data and self.data.pump_s else None
-        if seconds is not None and seconds != run_time:
-            await self.put("pumpdc", str(seconds).encode())
-        await self.put("pump", b"1")
-        if seconds is not None and run_time is not None and seconds != run_time:
-            await self.put("pumpdc", str(run_time).encode())
+        async with self._pump_lock:
+            if seconds is not None and seconds != run_time:
+                await self.put("pumpdc", str(seconds).encode())
+            await self.put("pump", b"1")
+            if seconds is not None and run_time is not None and seconds != run_time:
+                await self.put("pumpdc", str(run_time).encode())
         ran_s = seconds or run_time or 1
         if self._prev_diag is None or self._prev_diag.pump_ms is None:
             self._pumped(ran_s * 1000)  # firmware without pump_ms: counted here

@@ -31,7 +31,7 @@ address.
 | Run the pump | Runs its pump for its run time |
 | Pump running | On while a run started from Home Assistant goes on |
 | Beep | Its buzzer beeps, to find it (an "identify" button) |
-| Pump run time | How long the pump runs, 1 to 9 s (the board keeps it across restarts) |
+| Pump run time | How long the pump runs, 1 to 9 s (the board keeps it across restarts). Changed elsewhere (the fleet manager), it follows within seconds with the board's newer firmware, within the hour with older firmware |
 | Charging, Plugged in | Its power (newer firmware) |
 | Restarted (event) | It restarted, with why: power, reset pin, software, watchdog, CPU lockup, crash. For an automation on crashes |
 | Pump button (event) | Its pump ran with its button (seen at the next reading, with how long) |

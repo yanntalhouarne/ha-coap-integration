@@ -11,7 +11,8 @@ MANUFACTURER = "Yann T."
 MODEL = "ha-coap node"
 
 # How often the boards are asked for their readings, and how many of those times between two
-# reads of what changes rarely ('info': firmware, hardware; 'pumpdc': the pump's run time)
+# reads of what changes rarely ('info': firmware, hardware; 'pumpdc': the pump's run time, with
+# firmware whose 'diag' doesn't tell it)
 UPDATE_INTERVAL = timedelta(minutes=15)
 INFO_EVERY = 4  # every hour
 

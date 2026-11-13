@@ -101,6 +101,39 @@ async def test_samples_are_read_and_pushes_show_at_once(hass, board):
     assert observer.registered[-1] == (HOST, ("from=3",))
 
 
+async def test_the_pump_run_time_follows_changes_made_elsewhere(hass, board):
+    board.add_sample(32, 40)
+    await set_up(hass)
+    observer = FakeObserver.instances[0]
+    assert float(state(hass, "number", "pump_dc").state) == 3
+    # Set in the fleet manager: the board pushes without a new sample, read again at once
+    board.pump_s = 7
+    observer.push(HOST, board.history_payload(1))
+    await hass.async_block_till_done(wait_background_tasks=True)
+    assert float(state(hass, "number", "pump_dc").state) == 7
+    # Or at the next reading: its 'diag' tells it, 'pumpdc' isn't asked
+    asked = len(board.asked("pumpdc"))
+    board.pump_s = 4
+    await next_reading(hass)
+    assert float(state(hass, "number", "pump_dc").state) == 4
+    assert len(board.asked("pumpdc")) == asked
+    # A push with a new sample is the sample, not a change of settings
+    board.add_sample(932, 30)
+    observer.push(HOST, board.history_payload(1))
+    await hass.async_block_till_done(wait_background_tasks=True)
+    assert len(board.asked("pumpdc")) == asked
+
+
+async def test_firmware_without_it_in_diag_reads_the_pump_run_time_hourly(hass, board):
+    board.diag_pump_s = False
+    await set_up(hass)
+    board.pump_s = 6
+    await next_reading(hass)
+    assert float(state(hass, "number", "pump_dc").state) == 3
+    await next_reading(hass, 3)
+    assert float(state(hass, "number", "pump_dc").state) == 6
+
+
 async def test_not_observed_where_there_is_room_for_one_only(hass, board):
     """Firmware keeping one observer: registering would take the fleet manager's place."""
     board.diag["observers"] = 1

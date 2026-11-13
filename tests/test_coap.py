@@ -33,6 +33,17 @@ def test_parse_info():
         coap.parse_info(b"\x00")
 
 
+def test_parse_diag():
+    diag = coap.parse_diag(b"boots=12,up=3600,reset=power,role=child,srp=registered,rloc=5c01,parent=5c00,rssi=-62,"
+                           b"last_rssi=-60,lq=3,soil_mv=1696,power=charging,button_s=6,pump_ms=14020,pump_s=3,observers=3")
+    assert (diag.boots, diag.rloc16, diag.rssi, diag.power, diag.pump_ms, diag.pump_s, diag.observers) == \
+        (12, "0x5c01", -62, "charging", 14020, 3, 3)
+    older = coap.parse_diag(b"boots=12,up=0,reset=crash,fault=3@0001a2b4,role=detached,srp=off,soil_mv=-1")
+    assert (older.fault, older.soil_mv, older.pump_ms, older.pump_s, older.observers) == ("3@0001a2b4", None, None, None, 1)
+    with pytest.raises(coap.CoapError):
+        coap.parse_diag(b"role=child")
+
+
 class FakeBoard(asyncio.DatagramProtocol):
     """Answers like a board: piggybacked, or an empty ACK then the answer ('separate'), or
     nothing for the first 'drop' requests."""
