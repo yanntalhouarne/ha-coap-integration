@@ -166,6 +166,13 @@ async def test_watering(hass, board):
     board.diag["pump_ms"] += 4000
     await next_reading(hass)
     assert float(state(hass, "sensor", "water_used").state) == pytest.approx(0.18)
+    # Run from the fleet manager: when it ends the board pushes (no new sample), its 'diag' is read at once
+    observer = FakeObserver.instances[0]
+    board.diag["pump_ms"] += 3000
+    board.diag["up"] += 60
+    observer.push(HOST, board.history_payload(len(board.samples)))
+    await hass.async_block_till_done(wait_background_tasks=True)
+    assert float(state(hass, "sensor", "water_used").state) == pytest.approx(0.24)
     # The Water action on the Beep button: refused
     with pytest.raises(ServiceValidationError):
         await hass.services.async_call(DOMAIN, "water", {ATTR_ENTITY_ID: eid(hass, "button", "ping")}, blocking=True)

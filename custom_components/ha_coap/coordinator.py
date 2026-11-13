@@ -4,7 +4,8 @@ Every UPDATE_INTERVAL: its readings ('data'), its health ('diag'), and the sampl
 the last time ('hist', newer firmware). Its info and pump run time every INFO_EVERY times. Where
 the firmware has room for Home Assistant beside the fleet manager ('diag' observers=2 or more),
 reading 'hist' also registers for its pushes: a sample that changed (a watering, a board
-plugged in) shows at once. The samples also fill in the statistics of hours Home Assistant
+plugged in) shows at once, and so do its pump's run time set elsewhere and the water a pump run
+gave, whoever started it. The samples also fill in the statistics of hours Home Assistant
 missed, and tell when the plant will need water.
 """
 
@@ -99,13 +100,13 @@ class HaCoapCoordinator(DataUpdateCoordinator[BoardState]):
             info = await self._read_info() or info
         self._updates += 1
         diag = await self._read_diag()
+        if diag is not None and not self._diag_changes(diag):
+            diag = None  # older than one a push had read: that one stands
         if diag is not None and diag.pump_s is not None:
             pump_s = diag.pump_s  # newer firmware tells it at every reading
         elif pump_s is None or rarely:
             pump_s = await self.read_pump_s() or pump_s
-        if diag is not None:
-            self._diag_changes(diag)
-        diag = diag or (previous.diag if previous else None)
+        diag = diag or (self.data.diag if self.data else None)  # (a push may have read a newer one meanwhile)
         added = await self._read_history(diag)
         if self._no_hist:
             self._keep_point(now, data.soil_moisture)
@@ -151,11 +152,15 @@ class HaCoapCoordinator(DataUpdateCoordinator[BoardState]):
             _LOGGER.debug("%s: no 'diag' (%s)", self.name, err)  # older firmware
             return None
 
-    def _diag_changes(self, diag: coap.Diagnostics) -> None:
-        """A restart and its cause, its button's pump runs, its pump's run time: from what changed."""
+    def _diag_changes(self, diag: coap.Diagnostics) -> bool:
+        """A restart and its cause, its button's pump runs, its pump's run time: from what changed.
+        False for an answer older than the last one (a reading's, overtaken by a push's read): it
+        would count its runs again."""
         before = self._prev_diag
-        self._prev_diag = diag
         restarted = before is not None and diag.boots != before.boots
+        if before is not None and not restarted and diag.uptime_s < before.uptime_s:
+            return False
+        self._prev_diag = diag
         if restarted:
             for listener in list(self.restart_listeners):
                 listener(diag)
@@ -170,6 +175,7 @@ class HaCoapCoordinator(DataUpdateCoordinator[BoardState]):
             ran_ms = diag.pump_ms if restarted else diag.pump_ms - before.pump_ms
             if ran_ms > 0:
                 self._pumped(ran_ms)
+        return True
 
     def _pumped(self, ms: int, when: float | None = None) -> None:
         self.pumped_ms += ms
@@ -232,8 +238,8 @@ class HaCoapCoordinator(DataUpdateCoordinator[BoardState]):
     @callback
     def on_push(self, payload: bytes) -> None:
         """The board pushed its new samples (a watering, plugged in...): its readings at once. A
-        push without new samples: its settings changed (its pump's run time, set in the fleet
-        manager...), read again."""
+        push without new samples: something changed (its pump's run time, set in the fleet
+        manager; a pump run ended, whoever started it): its 'diag' read again."""
         try:
             history = coap.parse_history(payload)
         except coap.CoapError:
@@ -244,20 +250,29 @@ class HaCoapCoordinator(DataUpdateCoordinator[BoardState]):
         if self.data is None:
             return
         if not added:
-            self.config_entry.async_create_background_task(self.hass, self._pump_s_changed(),
-                                                           f"{DOMAIN} pump run time of {self.name}")
+            self.config_entry.async_create_background_task(self.hass, self._after_change(),
+                                                           f"{DOMAIN} change on {self.name}")
             return
         newest = added[-1][1]
         data = coap.Data(newest.soil_moisture, newest.battery, newest.air_humidity, newest.temperature)
         self.async_set_updated_data(replace(self.data, data=data, power=newest.power or self.data.power))
 
-    async def _pump_s_changed(self) -> None:
-        """Its pump's run time, read again (after its changes from here: not one of the Water
+    async def _after_change(self) -> None:
+        """Its 'diag' again: its pump's run time, and the water a pump run just gave ('pumpdc' with
+        firmware without pump_s in 'diag'). After its changes from here (not one of the Water
         action's, which it puts back)."""
         async with self._pump_lock:
-            value = await self.read_pump_s()
-        if value is not None and self.data is not None and value != self.data.pump_s:
-            self.async_set_updated_data(replace(self.data, pump_s=value))
+            diag = await self._read_diag()
+            pump_s = diag.pump_s if diag is not None and diag.pump_s is not None else await self.read_pump_s()
+        if self.data is None:
+            return
+        state = self.data
+        if diag is not None and self._diag_changes(diag):
+            state = replace(state, diag=diag, power=diag.power or state.power, last_watered=self._last_watered(state))
+        if pump_s is not None:
+            state = replace(state, pump_s=pump_s)
+        if state != self.data:
+            self.async_set_updated_data(state)
 
     # ------------------------------------------------------------ when it doesn't answer
 

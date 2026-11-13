@@ -3,7 +3,8 @@
 Each board is a config entry (found by zeroconf, or added by its address). Its coordinator asks
 it for its readings and gets its pushes; its entities show them, run its pump and beep it. One more
 entry can connect the fleet manager (the ha-coap-server app): each board then has a firmware
-update in Home Assistant's Updates.
+update in Home Assistant's Updates, each plant its water tank and its battery's days left, and the
+plants' care tasks are a to-do list.
 """
 
 from __future__ import annotations
@@ -24,7 +25,7 @@ from .fleet import FleetCoordinator
 _LOGGER = logging.getLogger(__name__)
 
 PLATFORMS = [Platform.SENSOR, Platform.BINARY_SENSOR, Platform.BUTTON, Platform.NUMBER, Platform.EVENT]
-FLEET_PLATFORMS = [Platform.UPDATE]
+FLEET_PLATFORMS = [Platform.UPDATE, Platform.SENSOR, Platform.BINARY_SENSOR, Platform.BUTTON, Platform.TODO]
 
 
 def is_fleet_entry(entry) -> bool:
@@ -56,7 +57,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: HaCoapConfigEntry) -> bo
         fleet = FleetCoordinator(hass, entry)
         entry.runtime_data = fleet
         await hass.config_entries.async_forward_entry_setups(entry, FLEET_PLATFORMS)
-        entry.async_create_background_task(hass, fleet.async_refresh(), f"{DOMAIN} fleet manager's firmware")
+        entry.async_create_background_task(hass, fleet.async_refresh(), f"{DOMAIN} fleet manager's firmware and plants")
         return True
     coordinator = HaCoapCoordinator(hass, entry, _observer(hass))
     entry.runtime_data = coordinator

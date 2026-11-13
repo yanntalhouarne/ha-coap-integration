@@ -27,7 +27,7 @@ address.
 | Needs water | On when its soil is under its **Water below** number (30 % by default; 0 turns it off) |
 | Next watering | When its soil goes under Water below, at the pace it dried since its last watering (from its samples of the last 2 days) |
 | Last watered | When its pump last ran (from here, its button, the fleet manager...) |
-| Water used | The water its pump moved (liters, always growing): add it to the **Energy dashboard** under Water consumption. Its run time (the board counts it, whatever started it) times its **Pump flow** number (20 ml/s by default: put the tube in a measuring cup, run the pump, and divide) |
+| Water used | The water its pump moved (liters, always growing): add it to the **Energy dashboard** under Water consumption. Its run time (the board counts it, whatever started it) times its **Pump flow** number (20 ml/s by default: put the tube in a measuring cup, run the pump, and divide). With the board's newer firmware it shows as each run ends, else at the next reading |
 | Run the pump | Runs its pump for its run time |
 | Pump running | On while a run started from Home Assistant goes on |
 | Beep | Its buzzer beeps, to find it (an "identify" button) |
@@ -54,7 +54,8 @@ Download diagnostics (on a board's device page) for what it last said, when some
 
 Newer firmware keeps its last samples (`hist`: 192, two days at one per 15 minutes) and pushes the
 new ones when its soil or battery moved by 5 % or more, or its power changed: a watering, a board
-plugged in show at once. The integration reads the samples at each reading and registers for the
+plugged in show at once. It also pushes when its pump's run time changes, and when a pump run
+ends: the integration reads its `diag` again (the run time, the water used). The integration reads the samples at each reading and registers for the
 pushes, but only on firmware with room for Home Assistant beside the fleet manager (its `diag`
 says `observers=2` or more); on firmware with one place, registering would take the fleet
 manager's.
@@ -71,7 +72,30 @@ Settings → Updates: what it runs against the release image, and **Install** to
 air. In the fleet manager: Settings, Other devices, make a link with **For the HA CoAP
 integration** ticked: it shows an address and a key. In Home Assistant: **Add integration → HA
 CoAP → Connect the fleet manager**, and paste them. That link only lets Home Assistant read the
-firmware and update a board to the release image, nothing else.
+firmware and update a board to the release image, read the plants' water tanks, battery
+forecasts and care tasks, and mark a tank refilled or a care task done, nothing else.
+
+## Water tanks, battery forecasts, care (the fleet manager)
+
+The same connection gives each plant, on its board's device (with the fleet manager's version of
+November 2026 or later):
+
+| Entity | What it is |
+|---|---|
+| Water tank | How full its tank is (%), with the ml left: the fleet manager counts every pump run against it, Home Assistant's too. Only for a plant whose tank's size is set in the fleet manager (its page, Watering) |
+| Water tank days left | How long its tank lasts at the pace it was used over the last two weeks (unknown until then) |
+| Water tank low | On at 20 % left |
+| Water tank refilled | Press it once the tank is full again: it's counted from now |
+| Battery days left | When its battery runs flat, from its trend over two weeks (unknown on USB power, or without a clear trend yet) |
+
+And one to-do list, **Plant care**, of the plants' care tasks (fertilize, repot...: added in the
+fleet manager, on each plant's page). One that's due is to do; tick it once done, and it's checked
+until it's due again, its number of days later. The fleet manager is read every 5 minutes.
+
+A second blueprint says when a tank is low (a notification in Home Assistant, and your own actions,
+such as a notification to your phone):
+`https://github.com/yanntalhouarne/ha-coap-integration/blob/master/blueprints/automation/ha_coap/tank_low.yaml`
+(Settings → Automations → Blueprints → Import).
 
 ## Watering automatically
 

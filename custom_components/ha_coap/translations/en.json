@@ -150,18 +150,23 @@
           "other": "Other"
         }
       },
-      "soil_voltage": { "name": "Soil sensor voltage" }
+      "soil_voltage": { "name": "Soil sensor voltage" },
+      "water_tank": { "name": "Water tank" },
+      "water_tank_days_left": { "name": "Water tank days left" },
+      "battery_days_left": { "name": "Battery days left" }
     },
     "binary_sensor": {
       "connectivity": { "name": "Connectivity" },
       "needs_water": { "name": "Needs water" },
       "pump_running": { "name": "Pump running" },
       "charging": { "name": "Charging" },
-      "plugged_in": { "name": "Plugged in" }
+      "plugged_in": { "name": "Plugged in" },
+      "water_tank_low": { "name": "Water tank low" }
     },
     "button": {
       "pump": { "name": "Run the pump" },
-      "ping": { "name": "Beep" }
+      "ping": { "name": "Beep" },
+      "water_tank_refilled": { "name": "Water tank refilled" }
     },
     "number": {
       "pump_run_time": { "name": "Pump run time" },
@@ -198,6 +203,9 @@
     },
     "update": {
       "firmware_update": { "name": "Firmware" }
+    },
+    "todo": {
+      "plant_care": { "name": "Plant care" }
     }
   }
 }

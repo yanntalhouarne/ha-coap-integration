@@ -1,0 +1,59 @@
+blueprint:
+  name: Say when a plant's water tank is low (HA CoAP)
+  description: >
+    When a plant's water tank runs low (its Water tank low sensor, from the fleet manager: 20 %
+    left, counting every pump run), a notification in Home Assistant, and your own actions if you
+    add some, such as a notification to your phone (its message can use {{ message }}, and
+    {{ plant }} for the plant's name). Once refilled, press the plant's Water tank refilled button.
+  domain: automation
+  source_url: https://github.com/yanntalhouarne/ha-coap-integration/blob/master/blueprints/automation/ha_coap/tank_low.yaml
+  input:
+    tank_low:
+      name: Water tank low
+      description: The plants' Water tank low sensors (one automation for all of them).
+      selector:
+        entity:
+          multiple: true
+          filter:
+            - integration: ha_coap
+              domain: binary_sensor
+    in_home_assistant:
+      name: In Home Assistant's notifications
+      default: true
+      selector:
+        boolean: {}
+    actions:
+      name: Also
+      description: Actions to run too, such as a notification to your phone.
+      default: []
+      selector:
+        action: {}
+
+mode: queued
+
+triggers:
+  - trigger: state
+    entity_id: !input tank_low
+    from: "off"
+    to: "on"
+
+variables:
+  in_home_assistant: !input in_home_assistant
+  plant: >-
+    {% set device = device_id(trigger.entity_id) %}
+    {% if device %}{{ device_attr(device, 'name_by_user') or device_attr(device, 'name') }}
+    {%- else %}{{ trigger.to_state.name | replace(' Water tank low', '') }}{% endif %}
+  message: "{{ plant }}'s water tank is low: refill it, then press its Water tank refilled button."
+
+actions:
+  - if:
+      - condition: template
+        value_template: "{{ in_home_assistant }}"
+    then:
+      - action: persistent_notification.create
+        data:
+          title: Water tank low
+          message: "{{ message }}"
+          notification_id: "ha_coap_tank_low_{{ trigger.entity_id }}"
+  - choose: []
+    default: !input actions

@@ -17,6 +17,7 @@ from homeassistant.components.sensor import (
     SensorStateClass,
 )
 from homeassistant.const import (
+    CONF_URL,
     PERCENTAGE,
     SIGNAL_STRENGTH_DECIBELS_MILLIWATT,
     EntityCategory,
@@ -28,6 +29,7 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .coordinator import BoardState, HaCoapConfigEntry, HaCoapCoordinator
+from .plants import add_plant_entities, battery_sensors, tank_sensors
 from .entity import HaCoapEntity
 
 RESET_CAUSES = ["power", "pin", "soft", "watchdog", "lockup", "crash", "other"]
@@ -111,6 +113,10 @@ SENSORS = (
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: HaCoapConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
+    if CONF_URL in entry.data:  # the fleet manager: each plant's water tank and battery forecast
+        add_plant_entities(hass, entry, async_add_entities, tank_sensors)
+        add_plant_entities(hass, entry, async_add_entities, battery_sensors)
+        return
     coordinator = entry.runtime_data
     async_add_entities([*(HaCoapSensor(coordinator, d) for d in SENSORS), HaCoapLastRestart(coordinator),
                         HaCoapWaterUsed(coordinator)])

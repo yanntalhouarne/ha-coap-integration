@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import voluptuous as vol
 from homeassistant.components.button import ButtonDeviceClass, ButtonEntity
+from homeassistant.const import CONF_URL
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers import config_validation as cv
@@ -14,11 +15,15 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from .const import DOMAIN
 from .coordinator import HaCoapConfigEntry
 from .entity import HaCoapEntity
+from .plants import add_plant_entities, tank_buttons
 
 SERVICE_WATER = "water"
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: HaCoapConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
+    if CONF_URL in entry.data:  # the fleet manager: each plant's water tank refilled
+        add_plant_entities(hass, entry, async_add_entities, tank_buttons)
+        return
     coordinator = entry.runtime_data
     async_add_entities([HaCoapPumpButton(coordinator), HaCoapBeepButton(coordinator)])
     platform = entity_platform.async_get_current_platform()

@@ -49,3 +49,44 @@ async def test_it_waters_when_the_plant_needs_water(hass):
         hass.states.async_set("binary_sensor.basil_needs_water", "on")
         await hass.async_block_till_done()
         assert len(watered) == 1
+
+
+TANK_LOW = BLUEPRINT.with_name("tank_low.yaml")
+
+
+def test_the_tank_blueprint_is_valid():
+    blueprint = models.Blueprint(load_yaml_dict(str(TANK_LOW)), expected_domain="automation", schema=BLUEPRINT_SCHEMA)
+    assert set(blueprint.inputs) == {"tank_low", "in_home_assistant", "actions"}
+
+
+def install_tank_low(config_dir: str) -> None:
+    target = Path(config_dir) / "blueprints" / "automation" / "ha_coap"
+    target.mkdir(parents=True, exist_ok=True)
+    (target / "tank_low.yaml").write_text(TANK_LOW.read_text(encoding="utf-8"), encoding="utf-8")
+
+
+async def test_it_says_when_a_tank_is_low(hass):
+    await hass.async_add_executor_job(install_tank_low, hass.config.config_dir)
+    told = []
+
+    async def phone(call):
+        told.append(call.data["message"])
+
+    hass.services.async_register("notify", "phone", phone)
+    assert await async_setup_component(hass, "persistent_notification", {})
+    basil, mint = {"friendly_name": "basil Water tank low"}, {"friendly_name": "mint Water tank low"}
+    hass.states.async_set("binary_sensor.basil_water_tank_low", "off", basil)
+    hass.states.async_set("binary_sensor.mint_water_tank_low", "off", mint)
+    assert await async_setup_component(hass, "automation", {"automation": {
+        "id": "tanks", "use_blueprint": {"path": "ha_coap/tank_low.yaml", "input": {
+            "tank_low": ["binary_sensor.basil_water_tank_low", "binary_sensor.mint_water_tank_low"],
+            "actions": [{"action": "notify.phone", "data": {"message": "{{ message }}"}}]}}}})
+    await hass.async_block_till_done()
+    hass.states.async_set("binary_sensor.basil_water_tank_low", "on", basil)
+    await hass.async_block_till_done()
+    assert told == ["basil's water tank is low: refill it, then press its Water tank refilled button."]
+    # Still low: not said again; another plant's: said
+    hass.states.async_set("binary_sensor.basil_water_tank_low", "on", {**basil, "x": 1})
+    hass.states.async_set("binary_sensor.mint_water_tank_low", "on", mint)
+    await hass.async_block_till_done()
+    assert told[1:] == ["mint's water tank is low: refill it, then press its Water tank refilled button."]

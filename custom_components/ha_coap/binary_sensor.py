@@ -11,12 +11,13 @@ from homeassistant.components.binary_sensor import (
     BinarySensorEntity,
     BinarySensorEntityDescription,
 )
-from homeassistant.const import EntityCategory
+from homeassistant.const import CONF_URL, EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .coordinator import BoardState, HaCoapConfigEntry, HaCoapCoordinator
 from .entity import HaCoapEntity
+from .plants import add_plant_entities, tank_binary_sensors
 
 ON_USB = ("usb", "charging", "charged")
 
@@ -43,6 +44,9 @@ BINARY_SENSORS = (
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: HaCoapConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
+    if CONF_URL in entry.data:  # the fleet manager: each plant's water tank low
+        add_plant_entities(hass, entry, async_add_entities, tank_binary_sensors)
+        return
     coordinator = entry.runtime_data
     async_add_entities([HaCoapConnectivity(coordinator), *(HaCoapBinarySensor(coordinator, d) for d in BINARY_SENSORS)])
 
