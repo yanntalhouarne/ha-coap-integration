@@ -42,7 +42,8 @@ address.
 While a board doesn't answer, its readings show **unavailable** (not their last value) and
 Connectivity is off. When the border router gives a board a new address (a new border router does,
 for every board), the integration is told by discovery and uses the new one at once. A board that
-hasn't answered for a day shows in **Repairs**, where you give its new address.
+hasn't answered for a day shows in **Repairs**. Its fix asks what happened: a new address (give it),
+off for now (no issue until it answers again), or gone (it's removed).
 
 The **Water** action (`ha_coap.water`, on a board's Run the pump button) runs its pump for a given
 time, 1 to 9 s, without changing its run time.

@@ -14,6 +14,7 @@ from homeassistant.const import CONF_HOST, CONF_ID, CONF_URL, Platform
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
+from homeassistant.helpers import issue_registry as ir
 
 from . import coap
 from .const import DOMAIN, board_id, clean_host
@@ -81,6 +82,11 @@ async def async_unload_entry(hass: HomeAssistant, entry: HaCoapConfigEntry) -> b
                 shared["observer"].close()
                 shared["observer"] = None
     return unloaded
+
+
+async def async_remove_entry(hass: HomeAssistant, entry: HaCoapConfigEntry) -> None:
+    """A removed board leaves no issue behind."""
+    ir.async_delete_issue(hass, DOMAIN, f"unreachable_{entry.entry_id}")
 
 
 async def async_migrate_entry(hass: HomeAssistant, entry: HaCoapConfigEntry) -> bool:

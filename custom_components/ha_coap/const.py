@@ -16,6 +16,9 @@ MODEL = "ha-coap node"
 UPDATE_INTERVAL = timedelta(minutes=15)
 INFO_EVERY = 4  # every hour
 
+# In a board's entry: it was said to be off (Repairs), so it isn't an issue until it has answered again
+QUIET_WHILE_OFF = "quiet_while_off"
+
 BOARD_ID = re.compile(r"[0-9a-fA-F]{8}")
 
 

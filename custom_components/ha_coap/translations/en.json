@@ -67,10 +67,23 @@
         "step": {
           "init": {
             "title": "{name} doesn't answer",
-            "description": "{name} hasn't answered at {host} for a day. A new border router gives every board a new address: give its new one (the fleet manager shows it). If the board is gone, remove it instead (Settings, Devices & services, HA CoAP).",
+            "description": "{name} hasn't answered at {host} for a day.",
+            "menu_options": {
+              "address": "It has a new address (after a new border router)",
+              "off": "It's off for now: no issue until it answers again",
+              "remove": "It's gone: remove it"
+            }
+          },
+          "address": {
+            "title": "{name}'s new address",
+            "description": "A new border router gives every board a new address: give its new one (the fleet manager shows it).",
             "data": {
               "host": "Address"
             }
+          },
+          "remove": {
+            "title": "Remove {name}?",
+            "description": "{name}, its device and its entities are removed from Home Assistant."
           }
         },
         "error": {

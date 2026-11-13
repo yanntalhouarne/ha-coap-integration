@@ -6,16 +6,18 @@ from datetime import timedelta
 
 import pytest
 from homeassistant import config_entries
+from homeassistant.components.repairs import repairs_flow_manager
 from homeassistant.const import ATTR_ENTITY_ID, CONF_HOST, CONF_ID, CONF_NAME, STATE_OFF, STATE_ON
 from homeassistant.data_entry_flow import FlowResultType
 from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers import issue_registry as ir
+from homeassistant.setup import async_setup_component
 from homeassistant.util import dt as dt_util
 from pytest_homeassistant_custom_component.common import MockConfigEntry, async_fire_time_changed
 
 from custom_components.ha_coap import coap
-from custom_components.ha_coap.const import DOMAIN, UPDATE_INTERVAL
+from custom_components.ha_coap.const import DOMAIN, QUIET_WHILE_OFF, UPDATE_INTERVAL
 from custom_components.ha_coap.coordinator import UNREACHABLE_ISSUE_S
 
 from .conftest import DEVICE_ID, HOST, FakeObserver
@@ -188,31 +190,76 @@ async def test_needs_water_and_next_watering(hass, board):
     assert state(hass, "binary_sensor", "needs_water").state == "unknown"
 
 
-async def test_a_board_unreachable_for_a_day_is_a_repair(hass, board):
+async def unreachable_for_a_day(hass, board):
+    """Set up, then not answering for a day: its Repairs issue. Returns (entry, issue ID)."""
+    assert await async_setup_component(hass, "repairs", {})
     entry = await set_up(hass)
     board.online = False
     await next_reading(hass)
-    coordinator = entry.runtime_data
-    coordinator._down_since -= UNREACHABLE_ISSUE_S  # a day ago
+    entry.runtime_data._down_since -= UNREACHABLE_ISSUE_S  # a day ago
     await next_reading(hass)
     issue_id = f"unreachable_{entry.entry_id}"
     assert ir.async_get(hass).async_get_issue(DOMAIN, issue_id) is not None
+    return entry, issue_id
+
+
+async def fix(hass, issue_id, choice):
+    """Opens the issue's fix, as the Repairs page does, and picks a choice in its menu."""
+    manager = repairs_flow_manager(hass)
+    result = await manager.async_init(DOMAIN, data={"issue_id": issue_id})
+    assert result["type"] is FlowResultType.MENU
+    assert result["menu_options"] == ["address", "off", "remove"]
+    return manager, await manager.async_configure(result["flow_id"], {"next_step_id": choice})
+
+
+async def test_a_board_unreachable_for_a_day_is_a_repair(hass, board):
+    entry, issue_id = await unreachable_for_a_day(hass, board)
     # The fix: its new address (the same board answers there)
     board.online = True
-    from custom_components.ha_coap.repairs import async_create_fix_flow
-    flow = await async_create_fix_flow(hass, issue_id, {"entry_id": entry.entry_id})
-    flow.hass = hass
-    result = await flow.async_step_init()
-    assert result["type"] is FlowResultType.FORM
+    manager, result = await fix(hass, issue_id, "address")
+    assert result["type"] is FlowResultType.FORM and result["step_id"] == "address"
     board.info = "b75c209,2.0,99999999"
-    result = await flow.async_step_init({CONF_HOST: "fd2a::99"})
+    result = await manager.async_configure(result["flow_id"], {CONF_HOST: "fd2a::99"})
     assert result["errors"] == {"base": "another_board"}
     board.info = f"b75c209,2.0,{DEVICE_ID}"
-    result = await flow.async_step_init({CONF_HOST: "[fd2a::99]"})
+    result = await manager.async_configure(result["flow_id"], {CONF_HOST: "[fd2a::99]"})
     assert result["type"] is FlowResultType.CREATE_ENTRY
     await hass.async_block_till_done(wait_background_tasks=True)
     assert entry.data[CONF_HOST] == "fd2a::99"
-    assert ir.async_get(hass).async_get_issue(DOMAIN, issue_id) is None  # it answers again: gone
+    assert ir.async_get(hass).async_get_issue(DOMAIN, issue_id) is None
+
+
+async def test_a_board_off_for_now_is_no_issue_until_it_answers(hass, board):
+    entry, issue_id = await unreachable_for_a_day(hass, board)
+    _, result = await fix(hass, issue_id, "off")
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    assert ir.async_get(hass).async_get_issue(DOMAIN, issue_id) is None   # dismissed
+    # Still off a day later: no issue again
+    await next_reading(hass)
+    if entry.runtime_data._down_since is not None:
+        entry.runtime_data._down_since -= UNREACHABLE_ISSUE_S
+    await next_reading(hass)
+    assert ir.async_get(hass).async_get_issue(DOMAIN, issue_id) is None
+    # Turned on: it answers, and is watched again (off for a day later: an issue)
+    board.online = True
+    await next_reading(hass)
+    assert QUIET_WHILE_OFF not in entry.data
+    board.online = False
+    await next_reading(hass)
+    entry.runtime_data._down_since -= UNREACHABLE_ISSUE_S
+    await next_reading(hass)
+    assert ir.async_get(hass).async_get_issue(DOMAIN, issue_id) is not None
+
+
+async def test_a_board_gone_for_good_is_removed(hass, board):
+    entry, issue_id = await unreachable_for_a_day(hass, board)
+    manager, result = await fix(hass, issue_id, "remove")
+    assert result["type"] is FlowResultType.FORM and result["step_id"] == "remove"   # asked first
+    result = await manager.async_configure(result["flow_id"], {})
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    await hass.async_block_till_done(wait_background_tasks=True)
+    assert hass.config_entries.async_get_entry(entry.entry_id) is None
+    assert ir.async_get(hass).async_get_issue(DOMAIN, issue_id) is None
 
 
 async def test_reconfigure_a_boards_address(hass, board):

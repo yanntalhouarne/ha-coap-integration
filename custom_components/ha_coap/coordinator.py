@@ -26,7 +26,7 @@ from homeassistant.helpers.event import async_call_later
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from . import coap, plant, statistics
-from .const import DOMAIN, INFO_EVERY, UPDATE_INTERVAL, board_id, clean_host
+from .const import DOMAIN, INFO_EVERY, QUIET_WHILE_OFF, UPDATE_INTERVAL, board_id, clean_host
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -265,6 +265,8 @@ class HaCoapCoordinator(DataUpdateCoordinator[BoardState]):
         return f"unreachable_{self.config_entry.entry_id}"
 
     def _not_answering(self, now: float) -> None:
+        if self.config_entry.data.get(QUIET_WHILE_OFF):
+            return  # said to be off (Repairs): not an issue until it has answered again
         if self._down_since is None:
             self._down_since = now
         elif now - self._down_since >= UNREACHABLE_ISSUE_S:
@@ -273,7 +275,11 @@ class HaCoapCoordinator(DataUpdateCoordinator[BoardState]):
                                   translation_placeholders={"name": self.name, "host": self.host})
 
     def _answering(self) -> None:
-        """It answers: no issue (also one raised before a reload, such as after its Repairs fix)."""
+        """It answers: no issue (also one raised before a reload, such as after its Repairs fix),
+        and one again if it stops answering for a day."""
+        if self.config_entry.data.get(QUIET_WHILE_OFF):
+            self.hass.config_entries.async_update_entry(
+                self.config_entry, data={k: v for k, v in self.config_entry.data.items() if k != QUIET_WHILE_OFF})
         if self._down_since is not None or not self._issue_cleared:
             self._down_since = None
             self._issue_cleared = True
