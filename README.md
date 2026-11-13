@@ -9,8 +9,10 @@ The boards' firmware and the fleet manager app are in
 
 ## Installing
 
-Through [HACS](https://hacs.xyz): add this repository as a custom repository (category
-*Integration*), install **HA CoAP**, then restart Home Assistant.
+Through [HACS](https://hacs.xyz) (called **Marketplace** in newer Home Assistant): add this
+repository as a custom repository (category *Integration*), install **HA CoAP**, then restart Home
+Assistant. A new version shows there within a few hours of its release; **⋮ → Update information**
+looks at once.
 
 Boards are found by themselves: each one registers an `_ot._udp` service (named
 `ha-coap-<device ID>`) with the border router, which advertises it to your network. Home Assistant
