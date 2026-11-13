@@ -256,10 +256,12 @@ class HaCoapPlantCard extends HTMLElement {
     const next = this._state('next_watering');
     const last = this._state('last_watered');
     const used = this._state('water_used');
+    const lasts = this._batteryLasts();
     const facts = [
       ['mdi:calendar-clock', 'Needs water', needs?.state === 'on' ? 'now' : ok(next) ? relative(next.state) : '—', 'next_watering'],
       ['mdi:watering-can-outline', 'Last watered', ok(last) ? relative(last.state) : '—', 'last_watered'],
       ...(compact ? [] : [['mdi:cup-water', 'Water used', ok(used) ? `${Number(used.state).toFixed(2)} ${esc(used.attributes.unit_of_measurement || 'L')}` : '—', 'water_used']]),
+      ...(lasts ? [[lasts.icon, 'Battery', lasts.text, lasts.key]] : []),
     ].map(([icon, label, value, key]) => `
       <button class="fact" data-more="${esc(this._ids[key] || '')}">
         <ha-icon icon="${icon}"></ha-icon><span class="label">${label}</span><span class="v">${esc(value)}</span>
@@ -337,17 +339,27 @@ class HaCoapPlantCard extends HTMLElement {
     </div>`;
   }
 
+  /* How long its battery lasts (Battery days left, from the fleet manager), or that it's on USB:
+   * {icon, text, key}; null when not known */
+  _batteryLasts() {
+    if (this._state('charging')?.state === 'on') return { icon: 'mdi:battery-charging', text: 'charging', key: 'charging' };
+    if (this._state('plugged_in')?.state === 'on') return { icon: 'mdi:power-plug', text: 'on USB', key: 'plugged_in' };
+    const days = num(this._state('battery_days_left'));
+    if (days === null) return null;
+    return { icon: 'mdi:battery-clock', text: days >= 60 ? `≈ ${Math.round(days / 30)} months left` : `≈ ${Math.round(days)} days left`,
+      key: 'battery_days_left' };
+  }
+
   _chips() {
     const chips = [];
     const battery = this._state('battery');
     const charging = this._state('charging')?.state === 'on';
     const plugged = this._state('plugged_in')?.state === 'on';
-    const days = num(this._state('battery_days_left'));
     if (battery) {
       const pct = num(battery);
       const icon = charging ? 'mdi:battery-charging' : pct === null ? 'mdi:battery-unknown'
         : `mdi:battery${pct >= 95 ? '' : `-${Math.max(10, Math.round(pct / 10) * 10)}`}`;
-      const extra = charging ? 'charging' : plugged ? 'on USB' : days !== null ? `${Math.round(days)} d left` : '';
+      const extra = charging ? 'charging' : plugged ? 'on USB' : '';  // how long it lasts: in the facts
       chips.push([icon, pct !== null ? `${Math.round(pct)} %` : '—', extra, 'battery', pct !== null && pct < 20 && !plugged ? 'bad' : '']);
     }
     const temperature = this._state('temperature');
