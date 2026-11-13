@@ -67,8 +67,9 @@ name: Basil   # optional: else the device's name
 It shows how the plant is (happy, thirsty, watering, soaked, not answering) as its color, its soil
 as a gauge with its Water below target marked, when it needs water next and when it was last
 watered, the water used, its soil over the last 2 days (with the target), its battery (and its
-days left, or charging), temperature and air. Then its pump: the run time as a slider and
-**Water** (tap twice: once to ask, once to water). With the fleet manager connected: its water
+days left, or charging), temperature and air. Then its pump: the run time as a slider (it asks
+"Change the run time to 6 s?" before changing it) and **Water** (tap twice: once to ask, once to
+water). With the fleet manager connected: its water
 tank (with **Refilled**, tapped twice too) and its care tasks that are due (tap one once it's
 done; the next one coming shows under them). Tapping a value opens its entity. It follows the
 theme (light, dark) and fits a phone.

@@ -16,6 +16,7 @@ const CARD = 'ha-coap-plant-card';
 const HISTORY_HOURS = 48;
 const HISTORY_EVERY_MS = 15 * 60 * 1000;
 const CONFIRM_MS = 4000;
+const RUN_TIME_CONFIRM_MS = 8000;  // a new run time not confirmed by then: the slider goes back
 
 const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const num = (state) => (state && !['unknown', 'unavailable', ''].includes(state.state) ? Number(state.state) : null);
@@ -119,7 +120,7 @@ class HaCoapPlantCard extends HTMLElement {
     if (!this.shadowRoot) this.attachShadow({ mode: 'open' });
     if (this._dragging) return;  // the run time slider: not redrawn under the finger
     this._ids = this._entities();
-    const signature = JSON.stringify([this._config, this._confirming, this._history && this._history.length,
+    const signature = JSON.stringify([this._config, this._confirming, this._pendingRunTime, this._history && this._history.length,
       Object.values(this._ids).map((id) => this._hass.states[id]?.last_updated), this._hass.themes?.darkMode]);
     if (signature === this._signature) return;
     this._signature = signature;
@@ -274,6 +275,17 @@ class HaCoapPlantCard extends HTMLElement {
     const seconds = num(runTime) ?? 3;
     const confirming = this._confirming === 'water';
     const disabled = !online || running || !this._ids.pump;
+    const pending = this._pendingRunTime;
+    if (pending != null) {
+      // A new run time, asked before it's set
+      return `<div class="pump runtime-confirm">
+        <span class="label"><ha-icon icon="mdi:timer-outline"></ha-icon><span>Change the run time to <b>${pending}&nbsp;s</b>?</span></span>
+        <span class="confirm-buttons">
+          <button class="small-btn" data-action="runtime-cancel">Cancel</button>
+          <button class="water" data-action="runtime-set">Change</button>
+        </span>
+      </div>`;
+    }
     return `<div class="pump">
       ${runTime ? `<label class="runtime">
         <span class="label"><ha-icon icon="mdi:timer-outline"></ha-icon>Run time <b>${Math.round(seconds)} s</b></span>
@@ -309,17 +321,40 @@ class HaCoapPlantCard extends HTMLElement {
       const label = root.querySelector('.runtime b');
       slider.addEventListener('pointerdown', () => { this._dragging = true; });
       slider.addEventListener('input', () => { label.textContent = `${slider.value} s`; });
-      slider.addEventListener('change', async () => {
+      slider.addEventListener('change', () => {
         this._dragging = false;
-        await this._call('number', 'set_value', { entity_id: this._ids.pump_run_time, value: Number(slider.value) });
+        const value = Number(slider.value);
+        if (value === Math.round(num(this._state('pump_run_time')) ?? 0)) return;  // back where it was
+        this._pendingRunTime = value;  // asked first: "Change the run time to 6 s?"
+        clearTimeout(this._runTimeTimer);
+        this._runTimeTimer = setTimeout(() => this._cancelRunTime(), RUN_TIME_CONFIRM_MS);
+        this._signature = null;
+        this._render();
       });
       slider.addEventListener('pointerup', () => { setTimeout(() => { this._dragging = false; }, 300); });
     }
     root.querySelectorAll('[data-action]').forEach((el) => el.addEventListener('click', () => this._action(el)));
   }
 
+  _cancelRunTime() {
+    clearTimeout(this._runTimeTimer);
+    this._pendingRunTime = null;
+    this._signature = null;
+    this._render();
+  }
+
   async _action(el) {
     const action = el.dataset.action;
+    if (action === 'runtime-cancel') {
+      this._cancelRunTime();
+      return;
+    }
+    if (action === 'runtime-set') {
+      const value = this._pendingRunTime;
+      this._cancelRunTime();
+      if (value != null) await this._call('number', 'set_value', { entity_id: this._ids.pump_run_time, value });
+      return;
+    }
     if (action === 'done') {
       el.classList.add('done');
       await this._call('todo', 'update_item', { entity_id: this._ids.plant_care, item: el.dataset.uid, status: 'completed' });
@@ -497,6 +532,11 @@ const STYLE = `<style>
   .water.running[disabled] { opacity: 1; }
   @keyframes pulse { 50% { box-shadow: 0 0 0 8px color-mix(in srgb, var(--info-color, #039be5) 20%, transparent); } }
   .small-btn { padding: 6px 12px; font-size: 13px; border: 1px solid var(--divider-color, rgba(127,127,127,.3)); }
+  .runtime-confirm .label { display: flex; align-items: center; gap: 6px; font-size: 14px; }
+  .runtime-confirm .label b { font-weight: 600; }
+  .runtime-confirm ha-icon { color: var(--warning-color, #ffa600); }
+  .confirm-buttons { display: inline-flex; gap: 8px; align-items: center; }
+  .confirm-buttons .small-btn { padding: 10px 16px; }
   .care { display: grid; gap: 4px; }
   .task { display: grid; grid-template-columns: 22px 1fr auto; align-items: center; gap: 8px; padding: 8px; border-radius: 10px;
     background: color-mix(in srgb, var(--warning-color, #ffa600) 10%, transparent); }
