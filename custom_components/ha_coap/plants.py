@@ -1,5 +1,5 @@
 """From the fleet manager, on each plant's device: its water tank (how full, the days it lasts,
-low, and a button for a tank refilled) and its battery's days left. And one to-do list, Plant
+low, and a button for a tank refilled), its battery's days left, and its photo. And one to-do list, Plant
 care, of the plants' care tasks (fertilize, repot...). The fleet manager keeps them: it counts
 each pump run against the tank (Home Assistant's too), and its care tasks come back after they're
 done."""
@@ -12,6 +12,7 @@ from typing import Any
 
 from homeassistant.components.binary_sensor import BinarySensorEntity
 from homeassistant.components.button import ButtonEntity
+from homeassistant.components.image import ImageEntity
 from homeassistant.components.sensor import SensorDeviceClass, SensorEntity, SensorStateClass
 from homeassistant.components.todo import TodoItem, TodoItemStatus, TodoListEntity, TodoListEntityFeature
 from homeassistant.config_entries import ConfigEntry
@@ -66,6 +67,10 @@ def battery_sensors(fleet: FleetCoordinator, device_id: str, plant: dict) -> lis
 
 def care_sensors(fleet: FleetCoordinator, device_id: str, plant: dict) -> list[Entity]:
     return [CareDue(fleet, device_id)] if plant.get("care") else []
+
+
+def photo_images(fleet: FleetCoordinator, device_id: str, plant: dict) -> list[Entity]:
+    return [PlantPhoto(fleet, device_id)] if plant.get("photo") else []
 
 
 def tank_binary_sensors(fleet: FleetCoordinator, device_id: str, plant: dict) -> list[Entity]:
@@ -189,6 +194,41 @@ class CareDue(PlantEntity, SensorEntity):
         return {"tasks": [{"uid": str(task["id"]), "what": task["what"], "every_days": task["every_days"],
                            "due": dt_util.utc_from_timestamp(task["due"]).isoformat(), "due_now": task["due"] <= now}
                           for task in self._tasks()]}
+
+
+class PlantPhoto(PlantEntity, ImageEntity):
+    """Its plant's newest photo (added in the fleet manager), for its card. Read once per photo."""
+
+    _attr_content_type = "image/jpeg"
+
+    def __init__(self, fleet: FleetCoordinator, device_id: str) -> None:
+        super().__init__(fleet, device_id, "plant_photo")
+        ImageEntity.__init__(self, fleet.hass)
+        self._photo: tuple[float, bytes] | None = None  # (when it was added, the picture)
+
+    @property
+    def _added(self) -> float | None:
+        return (self.plant or {}).get("photo")
+
+    @property
+    def available(self) -> bool:
+        return super().available and bool(self._added)
+
+    @property
+    def image_last_updated(self):
+        return dt_util.utc_from_timestamp(self._added) if self._added else None
+
+    async def async_image(self) -> bytes | None:
+        added = self._added
+        if not added:
+            return None
+        if self._photo is None or self._photo[0] != added:
+            got = await self.coordinator.photo(self.device_id)
+            if got is None:
+                return self._photo[1] if self._photo else None
+            data, self._attr_content_type = got
+            self._photo = (added, data)
+        return self._photo[1]
 
 
 class WaterTankLow(TankEntity, BinarySensorEntity):

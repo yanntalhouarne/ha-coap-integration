@@ -207,6 +207,9 @@
     },
     "todo": {
       "plant_care": { "name": "Plant care" }
+    },
+    "image": {
+      "plant_photo": { "name": "Photo" }
     }
   }
 }

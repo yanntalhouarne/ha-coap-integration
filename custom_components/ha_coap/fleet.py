@@ -91,6 +91,18 @@ class FleetCoordinator(DataUpdateCoordinator[dict]):
             raise HomeAssistantError(f"The fleet manager didn't take {what}: {err}") from err
         await self.async_request_refresh()
 
+    async def photo(self, device_id: str) -> tuple[bytes, str] | None:
+        """Its plant's newest photo and its type, or None (none, or no answer)."""
+        try:
+            async with async_get_clientsession(self.hass).get(
+                    f"{self.base}/api/devices/{device_id}/photo", headers={KEY_HEADER: self.key}, timeout=TIMEOUT) as response:
+                if response.status != 200:
+                    return None
+                return await response.read(), response.content_type or "image/jpeg"
+        except (aiohttp.ClientError, TimeoutError) as err:
+            _LOGGER.debug("No photo of %s from the fleet manager: %s", device_id, err)
+            return None
+
     async def refilled(self, device_id: str) -> None:
         """Its plant's water tank is full again."""
         await self._change(f"/api/devices/{device_id}/tank/refilled", "the tank refilled")

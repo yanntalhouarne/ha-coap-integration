@@ -40,7 +40,7 @@ CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 CARD_URL = "/ha_coap/ha-coap-plant-card.js"
 CARD_FILE = Path(__file__).parent / "frontend" / "ha-coap-plant-card.js"
 
-FLEET_PLATFORMS = [Platform.UPDATE, Platform.SENSOR, Platform.BINARY_SENSOR, Platform.BUTTON, Platform.TODO]
+FLEET_PLATFORMS = [Platform.UPDATE, Platform.SENSOR, Platform.BINARY_SENSOR, Platform.BUTTON, Platform.TODO, Platform.IMAGE]
 
 
 class PlantCardView(HomeAssistantView):

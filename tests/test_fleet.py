@@ -88,9 +88,9 @@ async def test_each_board_has_a_firmware_update(hass, aioclient_mock, board):
     assert hass.states.get(update).state == STATE_OFF
 
 
-def plants(tank=True, battery_days_left=37.6, care=None):
+def plants(tank=True, battery_days_left=37.6, care=None, photo=None):
     now = time.time()
-    return {"devices": [{
+    return {"devices": [{"photo": photo,
         "device_id": DEVICE_ID, "name": "basil", "on_usb": False, "battery_days_left": battery_days_left,
         "tank": {"size_ml": 1000, "left_ml": 150, "percent": 15, "low": True, "per_day_ml": 50, "filled": now - 17 * 86400,
                  "days_left": 3.0} if tank else None,
@@ -195,3 +195,25 @@ async def test_the_plants_care_tasks_are_a_to_do_list(hass, aioclient_mock, boar
     with pytest.raises(ServiceValidationError, match="fleet manager"):
         await hass.services.async_call("todo", "update_item", {ATTR_ENTITY_ID: todo, "item": "basil: Repot",
                                                               "rename": "basil: Repot it"}, blocking=True)
+
+
+async def test_each_plant_has_its_photo(hass, aioclient_mock, board, hass_client):
+    """The plant's newest photo in the fleet manager, as an image entity on its device (for its card)."""
+    from homeassistant.setup import async_setup_component
+
+    assert await async_setup_component(hass, "http", {})
+    png = b"\x89PNG\r\n\x1a\n" + b"\x01" * 32
+    aioclient_mock.get(f"{URL}/api/devices/{DEVICE_ID}/photo", content=png, headers={"Content-Type": "image/png"})
+    fleet = await set_up_both(hass, aioclient_mock, plants(photo=time.time() - 60))
+    photo = hass.states.get(plant_entity(hass, "image", "plant_photo"))
+    assert photo is not None and photo.attributes["entity_picture"].startswith("/api/image_proxy/")
+    client = await hass_client()
+    response = await client.get(photo.attributes["entity_picture"])
+    assert response.status == 200 and await response.read() == png
+    asked = len([c for c in aioclient_mock.mock_calls if c[1].path.endswith("/photo")])
+    await client.get(photo.attributes["entity_picture"])  # the same photo: not read again
+    assert len([c for c in aioclient_mock.mock_calls if c[1].path.endswith("/photo")]) == asked
+    # A plant without a photo has none
+    fleet.runtime_data.async_set_updated_data({**firmware(), "plants": {DEVICE_ID: plants(photo=None)["devices"][0]}})
+    await hass.async_block_till_done()
+    assert hass.states.get(photo.entity_id).state == "unavailable"
