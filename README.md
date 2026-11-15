@@ -39,7 +39,12 @@ address.
 | Pump button (event) | Its pump ran with its button (seen at the next reading, with how long) |
 | Connectivity, Signal, Link quality, Parent router, Thread role | Whether it answers, and its link to the Thread network (diagnostic) |
 | Restarts, Last restart, Last restart cause, Soil sensor voltage | Its health (diagnostic; the voltage, for calibrating, is off by default) |
+| Battery voltage | Its battery's voltage from its fuel gauge (diagnostic; the board's firmware of November 15, 2026 or later) |
 | Firmware, Hardware, Device ID | What it runs and which board it is (diagnostic; also on its device) |
+
+A reading the board couldn't take (a sensor unplugged, or a fuel gauge that doesn't answer) shows
+**unknown**, with the board's firmware of November 15, 2026 or later; older firmware sent 0, which
+looked like an empty battery or a dry soil. A soil it couldn't read doesn't turn Needs water on.
 
 While a board doesn't answer, its readings show **unavailable** (not their last value) and
 Connectivity is off. When the border router gives a board a new address (a new border router does,
@@ -132,6 +137,11 @@ November 2026 or later):
 | Care due | How many of its care tasks are due (with them all, for its card). Only for a plant with care tasks |
 | Round trip | Diagnostic: its last silent ping's round trip (unknown when it didn't answer; attributes `answered`, `pinged`). From **ping all** on the fleet manager's Network tab, or its timed pings (Settings → Network and timing → Ping every). Only once a board has been pinged, by a fleet manager that keeps round trips (November 13, 2026 or later) |
 | Photo | Its plant's newest photo, added in the fleet manager (its page, the photo): the card's avatar. Only for a plant with a photo |
+| Needs attention | On while the fleet manager has an open alert about its board: it stopped answering, its battery is low or isn't measured, a sensor doesn't read, its link is weak, it needs water... The alerts' messages are in its `alerts` attribute (their kinds in `kinds`): one dismissed in the fleet manager no longer counts. From a fleet manager of November 15, 2026 or later |
+
+The fleet manager's alerts about no board in particular (the border router down, a router the boards
+went through gone, no board answering) show in **Repairs** while they're open, and go away by
+themselves once the fleet manager clears them.
 
 And one to-do list, **Plant care**, of the plants' care tasks (fertilize, repot...: added in the
 fleet manager, on each plant's page). One that's due is to do; tick it once done, and it's checked

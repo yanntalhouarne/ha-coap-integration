@@ -229,10 +229,12 @@ class HaCoapCoordinator(DataUpdateCoordinator[BoardState]):
             cutoff = received_at - KEEP_SAMPLES_S
             self.samples = [s for s in self.samples if s[0] >= cutoff]
             self._seen = {k for k in self._seen if k[0] == history.boot} or self._seen
-            self.soil_points = [(t, s.soil_moisture) for t, s in self.samples]
+            self.soil_points = [(t, s.soil_moisture) for t, s in self.samples if s.soil_moisture is not None]
         return added
 
-    def _keep_point(self, when: float, soil: int) -> None:
+    def _keep_point(self, when: float, soil: int | None) -> None:
+        if soil is None:  # its sensor wasn't read
+            return
         self.soil_points = [p for p in self.soil_points if p[0] >= when - KEEP_SAMPLES_S] + [(when, soil)]
 
     @callback

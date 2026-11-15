@@ -33,8 +33,9 @@ def hourly(samples: list[tuple[float, coap.Sample]], field: str, before: float) 
     hours = defaultdict(list)
     for when, sample in samples:
         start = when - when % HOUR
-        if start + HOUR <= before:
-            hours[start].append(getattr(sample, field))
+        value = getattr(sample, field)
+        if start + HOUR <= before and value is not None:  # None: its sensor wasn't read
+            hours[start].append(value)
     return hours
 
 

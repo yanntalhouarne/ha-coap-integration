@@ -1,6 +1,6 @@
 """From the fleet manager, on each plant's device: its water tank (how full, the days it lasts,
-low, and a button for a tank refilled), its battery's days left, its photo, and its last silent ping's
-round trip. And one to-do list, Plant
+low, and a button for a tank refilled), its battery's days left, its photo, its last silent ping's
+round trip, and whether it needs attention (the fleet manager's open alerts about it). And one to-do list, Plant
 care, of the plants' care tasks (fertilize, repot...). The fleet manager keeps them: it counts
 each pump run against the tank (Home Assistant's too), and its care tasks come back after they're
 done."""
@@ -11,7 +11,7 @@ import time
 from collections.abc import Callable
 from typing import Any
 
-from homeassistant.components.binary_sensor import BinarySensorEntity
+from homeassistant.components.binary_sensor import BinarySensorDeviceClass, BinarySensorEntity
 from homeassistant.components.button import ButtonEntity
 from homeassistant.components.image import ImageEntity
 from homeassistant.components.sensor import SensorDeviceClass, SensorEntity, SensorStateClass
@@ -81,6 +81,11 @@ def photo_images(fleet: FleetCoordinator, device_id: str, plant: dict) -> list[E
 
 def tank_binary_sensors(fleet: FleetCoordinator, device_id: str, plant: dict) -> list[Entity]:
     return [WaterTankLow(fleet, device_id)] if plant.get("tank") is not None else []
+
+
+def attention_binary_sensors(fleet: FleetCoordinator, device_id: str, plant: dict) -> list[Entity]:
+    # A fleet manager that sends its alerts (newer)
+    return [NeedsAttention(fleet, device_id)] if "alerts" in plant else []
 
 
 def tank_buttons(fleet: FleetCoordinator, device_id: str, plant: dict) -> list[Entity]:
@@ -284,6 +289,30 @@ class WaterTankLow(TankEntity, BinarySensorEntity):
     @property
     def is_on(self) -> bool | None:
         return self.tank["low"] if self.tank else None
+
+
+class NeedsAttention(PlantEntity, BinarySensorEntity):
+    """On while the fleet manager has an open alert about this board: it stopped answering, its battery
+    is low or isn't measured, a sensor doesn't read, its link is weak, it needs water... Its
+    alerts are in the attributes; one dismissed in the fleet manager no longer counts."""
+
+    _attr_device_class = BinarySensorDeviceClass.PROBLEM
+
+    def __init__(self, fleet: FleetCoordinator, device_id: str) -> None:
+        super().__init__(fleet, device_id, "needs_attention")
+
+    @property
+    def _alerts(self) -> list[dict]:
+        return (self.plant or {}).get("alerts") or []
+
+    @property
+    def is_on(self) -> bool | None:
+        return bool(self._alerts) if self.plant is not None else None
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        return {"alerts": [alert["message"] for alert in self._alerts],
+                "kinds": sorted({alert["kind"] for alert in self._alerts})}
 
 
 class WaterTankRefilled(TankEntity, ButtonEntity):

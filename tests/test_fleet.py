@@ -9,6 +9,7 @@ from homeassistant.const import ATTR_ENTITY_ID, CONF_API_KEY, CONF_HOST, CONF_ID
 from homeassistant.data_entry_flow import FlowResultType
 from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers import entity_registry as er
+from homeassistant.helpers import issue_registry as ir
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.ha_coap.const import DOMAIN
@@ -88,9 +89,10 @@ async def test_each_board_has_a_firmware_update(hass, aioclient_mock, board):
     assert hass.states.get(update).state == STATE_OFF
 
 
-def plants(tank=True, battery_days_left=37.6, care=None, photo=None, round_trip=None):
+def plants(tank=True, battery_days_left=37.6, care=None, photo=None, round_trip=None, alerts=None, fleet_alerts=None):
     now = time.time()
-    return {"devices": [{"photo": photo, "round_trip": round_trip,
+    extra = {"alerts": alerts} if alerts is not None else {}  # a fleet manager that sends its alerts (newer)
+    return {**({"alerts": fleet_alerts} if fleet_alerts is not None else {}), "devices": [{**extra, "photo": photo, "round_trip": round_trip,
         "device_id": DEVICE_ID, "name": "basil", "on_usb": False, "battery_days_left": battery_days_left,
         "tank": {"size_ml": 1000, "left_ml": 150, "percent": 15, "low": True, "per_day_ml": 50, "filled": now - 17 * 86400,
                  "days_left": 3.0} if tank else None,
@@ -217,6 +219,40 @@ async def test_each_plant_has_its_photo(hass, aioclient_mock, board, hass_client
     fleet.runtime_data.async_set_updated_data({**firmware(), "plants": {DEVICE_ID: plants(photo=None)["devices"][0]}})
     await hass.async_block_till_done()
     assert hass.states.get(photo.entity_id).state == "unavailable"
+
+
+async def test_a_plant_that_needs_attention(hass, aioclient_mock, board):
+    """On while the fleet manager has an open alert about its board, with the alerts' messages; none from
+    a fleet manager that doesn't send them."""
+    await set_up_both(hass, aioclient_mock, plants())
+    assert plant_entity(hass, "binary_sensor", "needs_attention") is None  # an older fleet manager
+    fleet = next(e for e in hass.config_entries.async_entries(DOMAIN) if e.unique_id == "fleet_manager")
+    gauge = {"key": f"sensor-failed:{DEVICE_ID}", "kind": "sensor", "raised": time.time(),
+             "message": "basil couldn't read its fuel gauge: its battery level is unknown. A loose wire, or a sensor not fitted?"}
+    fleet.runtime_data.async_set_updated_data(fleet.runtime_data.data | {"plants": {p["device_id"]: p for p in plants(alerts=[gauge])["devices"]}})
+    await hass.async_block_till_done()
+    state = hass.states.get(plant_entity(hass, "binary_sensor", "needs_attention"))
+    assert state is not None, "no binary sensor"
+    assert state.state == STATE_ON and state.attributes["device_class"] == "problem"
+    assert state.attributes["alerts"] == [gauge["message"]] and state.attributes["kinds"] == ["sensor"]
+    fleet.runtime_data.async_set_updated_data(fleet.runtime_data.data | {"plants": {p["device_id"]: p for p in plants(alerts=[])["devices"]}})
+    await hass.async_block_till_done()
+    assert hass.states.get(plant_entity(hass, "binary_sensor", "needs_attention")).state == STATE_OFF
+
+
+async def test_the_fleet_managers_other_alerts_are_repairs(hass, aioclient_mock, board):
+    """Its alerts about no board (the border router down...) are repairs while they're open."""
+    down = {"key": "border-router:down", "kind": "border-router", "raised": time.time(), "message": "The border router is down"}
+    fleet = await set_up_both(hass, aioclient_mock, plants(alerts=[], fleet_alerts=[down]))
+    issues = ir.async_get(hass)
+    issue = issues.async_get_issue(DOMAIN, "fleet_alert_border_router_down")
+    assert issue is not None and issue.translation_placeholders == {"message": "The border router is down"}
+    aioclient_mock.clear_requests()
+    aioclient_mock.get(f"{URL}/api/ha/firmware", json=firmware())
+    aioclient_mock.get(f"{URL}/api/ha/plants", json=plants(alerts=[], fleet_alerts=[]))
+    await fleet.runtime_data.async_refresh()
+    await hass.async_block_till_done()
+    assert issues.async_get_issue(DOMAIN, "fleet_alert_border_router_down") is None
 
 
 async def test_a_boards_round_trip(hass, aioclient_mock, board):

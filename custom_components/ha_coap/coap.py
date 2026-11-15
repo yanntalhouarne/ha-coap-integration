@@ -43,10 +43,24 @@ class Info:
 class Data:
     """The board's 'data': its latest readings."""
 
-    soil_moisture: int  # %
-    battery: int        # %
-    air_humidity: int   # %
-    temperature: int    # °C
+    soil_moisture: int | None  # % (None: its sensor wasn't read)
+    battery: int | None        # %
+    air_humidity: int | None   # %
+    temperature: int | None    # °C
+
+
+# A reading the board couldn't take (newer firmware): 255 for a percentage, -128 for the temperature,
+# rather than 0, which looks like an empty battery or a dry soil. Unknown in Home Assistant.
+UNKNOWN = 255
+UNKNOWN_TEMPERATURE = -128
+
+
+def _percent(value: int) -> int | None:
+    return None if value > 100 else value
+
+
+def _temperature(value: int) -> int | None:
+    return None if value == UNKNOWN_TEMPERATURE else value
 
 
 def code_name(code: int) -> str:
@@ -232,7 +246,7 @@ def parse_data(payload: bytes) -> Data:
     if len(payload) < 4:
         raise CoapError(f"unexpected 'data' payload: {payload!r}")
     temperature = payload[3] - 256 if payload[3] > 127 else payload[3]
-    return Data(payload[0], payload[1], payload[2], temperature)
+    return Data(_percent(payload[0]), _percent(payload[1]), _percent(payload[2]), _temperature(temperature))
 
 
 def parse_info(payload: bytes) -> Info:
@@ -265,6 +279,8 @@ class Diagnostics:
     pump_ms: int | None          # its pump's run time since boot, whatever started it (ms)
     observers: int               # how many can observe 'hist' at once (1 before this field)
     pump_s: int | None = None    # its pump's run time setting (s), 1 to 9 (None before this field)
+    battery_mv: int | None = None  # its battery's voltage from the fuel gauge (mV; None when not read, or before this field)
+    failed: int | None = None    # the sensors its last sample couldn't read: 1 air, 2 fuel gauge, 4 soil (None before this field)
 
 
 def parse_diag(payload: bytes) -> Diagnostics:
@@ -287,11 +303,13 @@ def parse_diag(payload: bytes) -> Diagnostics:
 
     soil_mv = number("soil_mv")
     pump_s = number("pump_s")
+    battery_mv = number("vbat")
     return Diagnostics(number("boots") or 0, number("up") or 0, fields["reset"], fields.get("fault", ""),
                        fields.get("role", ""), hex16("rloc"), hex16("parent"), number("rssi"), number("lq"),
                        soil_mv if soil_mv is not None and soil_mv >= 0 else None, fields.get("power", ""),
                        number("button_s"), number("pump_ms"), number("observers") or 1,
-                       pump_s if pump_s is not None and 1 <= pump_s <= 9 else None)
+                       pump_s if pump_s is not None and 1 <= pump_s <= 9 else None,
+                       battery_mv if battery_mv is not None and battery_mv >= 0 else None, number("failed"))
 
 
 # ---------------------------------------------------------------- 'hist': the samples a board keeps
@@ -305,10 +323,10 @@ POWER_NAMES = ("battery", "usb", "charging", "charged")
 class Sample:
     seq: int          # its number since the board's boot
     uptime_s: int     # when, in seconds since its boot
-    soil_moisture: int
-    battery: int
-    air_humidity: int
-    temperature: int
+    soil_moisture: int | None  # None: not read (UNKNOWN)
+    battery: int | None
+    air_humidity: int | None
+    temperature: int | None
     power: str
 
 
@@ -339,7 +357,7 @@ def parse_history(payload: bytes) -> History:
     samples = []
     for i in range(count):
         uptime_s, soil, battery, air, temperature, power = HISTORY_ENTRY.unpack_from(payload, HISTORY_HEADER.size + i * size)
-        samples.append(Sample(first + i, uptime_s, soil, battery, air, temperature,
+        samples.append(Sample(first + i, uptime_s, _percent(soil), _percent(battery), _percent(air), _temperature(temperature),
                               POWER_NAMES[power] if power < len(POWER_NAMES) else ""))
     return History(boot, uptime, first, next_seq, samples)
 

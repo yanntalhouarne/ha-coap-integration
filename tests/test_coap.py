@@ -33,6 +33,20 @@ def test_parse_info():
         coap.parse_info(b"\x00")
 
 
+def test_readings_not_taken_are_unknown_not_zero():
+    """Newer firmware sends 255 for a percentage it couldn't read, -128 for the temperature."""
+    assert coap.parse_data(bytes([42, 255, 255, 128])) == coap.Data(42, None, None, None)
+    assert coap.parse_data(bytes([0, 0, 0, 0])) == coap.Data(0, 0, 0, 0)  # older firmware: 0 is 0
+    header = coap.HISTORY_HEADER.pack(1, 1, coap.HISTORY_ENTRY.size, 3, 100, 7, 8)
+    [sample] = coap.parse_history(header + coap.HISTORY_ENTRY.pack(40, 255, 87, 55, -128, 0)).samples
+    assert (sample.soil_moisture, sample.battery, sample.temperature) == (None, 87, None)
+    diag = coap.parse_diag(b"boots=1,up=5,reset=power,role=child,soil_mv=-1,vbat=3712,failed=6")
+    assert (diag.battery_mv, diag.failed) == (3712, 6)
+    assert coap.parse_diag(b"boots=1,up=5,reset=power,role=child,vbat=-1,failed=2").battery_mv is None
+    older = coap.parse_diag(b"boots=1,up=5,reset=power,role=child,soil_mv=900")
+    assert (older.battery_mv, older.failed) == (None, None)
+
+
 def test_parse_diag():
     diag = coap.parse_diag(b"boots=12,up=3600,reset=power,role=child,srp=registered,rloc=5c01,parent=5c00,rssi=-62,"
                            b"last_rssi=-60,lq=3,soil_mv=1696,power=charging,button_s=6,pump_ms=14020,pump_s=3,observers=3")

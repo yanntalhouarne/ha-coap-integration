@@ -109,6 +109,12 @@ SENSORS = (
         key="soil_voltage", translation_key="soil_voltage", device_class=SensorDeviceClass.VOLTAGE,
         native_unit_of_measurement=UnitOfElectricPotential.MILLIVOLT, state_class=SensorStateClass.MEASUREMENT,
         entity_category=EntityCategory.DIAGNOSTIC, entity_registry_enabled_default=False, value=_diag("soil_mv")),
+    # Its battery's voltage from the fuel gauge (newer firmware): unknown when the gauge doesn't answer
+    HaCoapSensorDescription(
+        key="battery_voltage", translation_key="battery_voltage", device_class=SensorDeviceClass.VOLTAGE,
+        native_unit_of_measurement=UnitOfElectricPotential.MILLIVOLT, suggested_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        suggested_display_precision=2, state_class=SensorStateClass.MEASUREMENT,
+        entity_category=EntityCategory.DIAGNOSTIC, value=_diag("battery_mv")),
 )
 
 

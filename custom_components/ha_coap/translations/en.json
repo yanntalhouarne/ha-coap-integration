@@ -92,6 +92,10 @@
           "another_board": "Another board answers at this address"
         }
       }
+    },
+    "fleet_alert": {
+      "title": "Fleet manager: {message}",
+      "description": "The fleet manager raised this alert: {message}\n\nIt goes away by itself once the fleet manager clears it, or once it's dismissed there."
     }
   },
   "exceptions": {
@@ -151,6 +155,7 @@
         }
       },
       "soil_voltage": { "name": "Soil sensor voltage" },
+      "battery_voltage": { "name": "Battery voltage" },
       "water_tank": { "name": "Water tank" },
       "water_tank_days_left": { "name": "Water tank days left" },
       "battery_days_left": { "name": "Battery days left" },
@@ -163,7 +168,8 @@
       "pump_running": { "name": "Pump running" },
       "charging": { "name": "Charging" },
       "plugged_in": { "name": "Plugged in" },
-      "water_tank_low": { "name": "Water tank low" }
+      "water_tank_low": { "name": "Water tank low" },
+      "needs_attention": { "name": "Needs attention" }
     },
     "button": {
       "pump": { "name": "Run the pump" },

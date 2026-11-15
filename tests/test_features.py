@@ -63,6 +63,22 @@ async def test_its_health(hass, board):
     assert eid(hass, "sensor", "soil_voltage") is not None  # disabled by default, but there
 
 
+async def test_a_sensor_the_board_couldnt_read_is_unknown(hass, board):
+    """Newer firmware sends 255 for what it couldn't read (not 0 %): unknown, and no 'needs water' from
+    a soil it couldn't read. Its battery's voltage, from its fuel gauge."""
+    board.diag["vbat"] = 3712
+    await set_up(hass)
+    assert float(state(hass, "sensor", "battery_voltage").state) == pytest.approx(3.712)
+    board.battery, board.soil = 255, 255
+    board.diag["vbat"], board.diag["failed"] = -1, 6
+    await next_reading(hass)
+    assert state(hass, "sensor", "battery").state == "unknown"
+    assert state(hass, "sensor", "soil-humidity").state == "unknown"
+    assert state(hass, "sensor", "battery_voltage").state == "unknown"
+    assert state(hass, "binary_sensor", "needs_water").state == "unknown"
+    assert state(hass, "sensor", "temperature").state == "-3"
+
+
 async def test_older_firmware_without_diag_or_hist(hass, board):
     board.diag = None
     board.samples = None

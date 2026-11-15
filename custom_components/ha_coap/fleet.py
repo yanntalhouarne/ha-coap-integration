@@ -6,6 +6,7 @@ devices, "For the HA CoAP integration"), which allows only that."""
 from __future__ import annotations
 
 import logging
+import re
 from datetime import timedelta
 from typing import Any
 
@@ -14,8 +15,11 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_API_KEY, CONF_URL
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
+from homeassistant.helpers import issue_registry as ir
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+
+from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -24,6 +28,11 @@ INTERVAL_UPDATING = timedelta(seconds=10)  # while an update runs: its progress
 KEY_HEADER = "X-HACoap-Key"                # the app's link key
 CHANGE_HEADER = {"X-HACoap": "1"}          # the app asks it of every change
 TIMEOUT = aiohttp.ClientTimeout(total=20)
+
+
+def _slug(key: str) -> str:
+    """An alert's key as part of an issue's ID: 'router-gone:0x5c00' → 'router_gone_0x5c00'."""
+    return re.sub(r"[^a-z0-9]+", "_", key.lower()).strip("_")
 
 
 class FleetError(Exception):
@@ -66,6 +75,7 @@ class FleetCoordinator(DataUpdateCoordinator[dict]):
             data = await fetch(session, f"{self.base}/api/ha/firmware", self.key)
         except FleetError as err:
             raise UpdateFailed(str(err)) from err
+        plants = None
         try:
             plants = await fetch(session, f"{self.base}/api/ha/plants", self.key)
             data["plants"] = {plant["device_id"]: plant for plant in plants.get("devices", [])}
@@ -73,10 +83,27 @@ class FleetCoordinator(DataUpdateCoordinator[dict]):
             # Refused: a fleet manager older than its plants (none). Else: as they were
             _LOGGER.debug("No plants from the fleet manager: %s", err)
             data["plants"] = {} if err.auth else self.plants()
+        self._fleet_issues(plants.get("alerts") if isinstance(plants, dict) else None)
         updating = data.get("running") or any(
             (d.get("update") or {}).get("status") in ("queued", "running") for d in data.get("devices", []))
         self.update_interval = INTERVAL_UPDATING if updating else INTERVAL
         return data
+
+    def _fleet_issues(self, alerts: list[dict] | None) -> None:
+        """The fleet manager's open alerts about no board (the border router down, a router gone, no
+        board answering...) as repairs, gone once it clears them. None: it didn't say (older, or
+        unreachable): the issues stay as they were."""
+        if alerts is None:
+            return
+        wanted = {f"fleet_alert_{_slug(alert['key'])}": alert for alert in alerts}
+        for issue_id, alert in wanted.items():
+            ir.async_create_issue(self.hass, DOMAIN, issue_id, is_fixable=False, severity=ir.IssueSeverity.WARNING,
+                                  translation_key="fleet_alert", translation_placeholders={"message": alert["message"]})
+        # The ones raised before (since a restart too: the repairs are kept) that cleared
+        raised = {issue_id for domain, issue_id in ir.async_get(self.hass).issues if domain == DOMAIN
+                  and issue_id.startswith("fleet_alert_")}
+        for issue_id in raised - wanted.keys():
+            ir.async_delete_issue(self.hass, DOMAIN, issue_id)
 
     def device(self, device_id: str) -> dict | None:
         return next((d for d in (self.data or {}).get("devices", []) if d["device_id"] == device_id), None)
